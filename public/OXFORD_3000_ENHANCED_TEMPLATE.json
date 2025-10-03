@@ -1,0 +1,506 @@
+{
+  "metadata": {
+    "title": "Oxford 3000+ Enhanced Vocabulary Database",
+    "description": "Complete Oxford word list with all CEFR levels (A1-C2) and progress tracking",
+    "version": "2.0",
+    "source": "Oxford University Press",
+    "lastUpdated": "2025-01-03",
+    "totalWords": 24,
+    "wordCounts": {
+      "A1": {
+        "count": 8,
+        "target": 800,
+        "percentage": 1.0,
+        "description": "Beginner level - basic everyday words"
+      },
+      "A2": {
+        "count": 6,
+        "target": 1000,
+        "percentage": 0.6,
+        "description": "Elementary level - common everyday situations"
+      },
+      "B1": {
+        "count": 4,
+        "target": 800,
+        "percentage": 0.5,
+        "description": "Intermediate level - more complex topics"
+      },
+      "B2": {
+        "count": 2,
+        "target": 400,
+        "percentage": 0.5,
+        "description": "Upper Intermediate - advanced and abstract topics"
+      },
+      "C1": {
+        "count": 2,
+        "target": 500,
+        "percentage": 0.4,
+        "description": "Advanced - effective operational proficiency"
+      },
+      "C2": {
+        "count": 2,
+        "target": 500,
+        "percentage": 0.4,
+        "description": "Mastery - near-native speaker level"
+      }
+    },
+    "learningProgress": {
+      "totalLearned": 0,
+      "totalTarget": 3000,
+      "percentageComplete": 0,
+      "currentLevel": "A1",
+      "nextMilestone": {
+        "level": "A1",
+        "wordsRemaining": 800,
+        "wordsCompleted": 0
+      }
+    }
+  },
+  "vocabulary": [
+    {
+      "id": 1,
+      "word": "a",
+      "pos": "article",
+      "level": "A1",
+      "definition": "indefinite article used before consonant sounds",
+      "family": ["an"],
+      "synonyms": [],
+      "opposites": [],
+      "example": "I have a book on the table.",
+      "persian": "یک",
+      "learned": false,
+      "dateAdded": "2025-01-03",
+      "difficulty": "easy"
+    },
+    {
+      "id": 2,
+      "word": "about",
+      "pos": "preposition",
+      "level": "A1",
+      "definition": "concerning or regarding something",
+      "family": [],
+      "synonyms": ["regarding", "concerning", "relating to"],
+      "opposites": [],
+      "example": "Tell me about your day at school.",
+      "persian": "درباره، راجع به",
+      "learned": false,
+      "dateAdded": "2025-01-03",
+      "difficulty": "easy"
+    },
+    {
+      "id": 3,
+      "word": "above",
+      "pos": "preposition",
+      "level": "A1",
+      "definition": "at a higher level than something",
+      "family": [],
+      "synonyms": ["over", "overhead", "higher than"],
+      "opposites": ["below", "under", "beneath", "underneath"],
+      "example": "The bird flies above the clouds.",
+      "persian": "بالای، روی",
+      "learned": false,
+      "dateAdded": "2025-01-03",
+      "difficulty": "easy"
+    },
+    {
+      "id": 4,
+      "word": "action",
+      "pos": "noun",
+      "level": "A1",
+      "definition": "the process of doing something",
+      "family": ["act (v)", "active (adj)", "activity (n)"],
+      "synonyms": ["act", "deed", "move"],
+      "opposites": ["inaction", "passivity"],
+      "example": "We need to take action now.",
+      "persian": "عمل، اقدام",
+      "learned": false,
+      "dateAdded": "2025-01-03",
+      "difficulty": "easy"
+    },
+    {
+      "id": 5,
+      "word": "actor",
+      "pos": "noun",
+      "level": "A1",
+      "definition": "a person who performs in plays or films",
+      "family": ["act (v)", "actress (n)", "acting (n)"],
+      "synonyms": ["performer", "player"],
+      "opposites": [],
+      "example": "He is a famous actor in Hollywood.",
+      "persian": "بازیگر",
+      "learned": false,
+      "dateAdded": "2025-01-03",
+      "difficulty": "easy"
+    },
+    {
+      "id": 6,
+      "word": "add",
+      "pos": "verb",
+      "level": "A1",
+      "definition": "put something together with something else",
+      "family": ["addition (n)", "additional (adj)", "additive (n)"],
+      "synonyms": ["include", "attach", "append", "join"],
+      "opposites": ["subtract", "remove", "take away"],
+      "example": "Please add sugar to my coffee.",
+      "persian": "اضافه کردن، جمع کردن",
+      "learned": false,
+      "dateAdded": "2025-01-03",
+      "difficulty": "easy"
+    },
+    {
+      "id": 7,
+      "word": "address",
+      "pos": "noun",
+      "level": "A1",
+      "definition": "the details of where someone lives",
+      "family": ["addressee (n)"],
+      "synonyms": ["location", "residence", "place"],
+      "opposites": [],
+      "example": "What is your home address?",
+      "persian": "آدرس، نشانی",
+      "learned": false,
+      "dateAdded": "2025-01-03",
+      "difficulty": "easy"
+    },
+    {
+      "id": 8,
+      "word": "adult",
+      "pos": "noun",
+      "level": "A1",
+      "definition": "a person who is fully grown or developed",
+      "family": ["adulthood (n)"],
+      "synonyms": ["grownup", "mature person"],
+      "opposites": ["child", "minor", "kid"],
+      "example": "Adults must pay full price for the ticket.",
+      "persian": "بزرگسال",
+      "learned": false,
+      "dateAdded": "2025-01-03",
+      "difficulty": "easy"
+    },
+    {
+      "id": 9,
+      "word": "ability",
+      "pos": "noun",
+      "level": "A2",
+      "definition": "skill or capacity to do something",
+      "family": ["able (adj)", "enable (v)", "unable (adj)", "disability (n)"],
+      "synonyms": ["skill", "talent", "capacity", "competence", "capability"],
+      "opposites": ["inability", "incapacity", "disability"],
+      "example": "She has great ability in mathematics.",
+      "persian": "توانایی، قابلیت",
+      "learned": false,
+      "dateAdded": "2025-01-03",
+      "difficulty": "medium"
+    },
+    {
+      "id": 10,
+      "word": "able",
+      "pos": "adjective",
+      "level": "A2",
+      "definition": "having the power, skill, or means to do something",
+      "family": ["ability (n)", "enable (v)", "unable (adj)", "ably (adv)"],
+      "synonyms": ["capable", "competent", "qualified", "skilled"],
+      "opposites": ["unable", "incapable", "incompetent"],
+      "example": "I am able to help you with your homework.",
+      "persian": "قادر، توانا",
+      "learned": false,
+      "dateAdded": "2025-01-03",
+      "difficulty": "medium"
+    },
+    {
+      "id": 11,
+      "word": "abroad",
+      "pos": "adverb",
+      "level": "A2",
+      "definition": "in or to a foreign country",
+      "family": [],
+      "synonyms": ["overseas", "internationally"],
+      "opposites": ["home", "domestically"],
+      "example": "She studies abroad in France.",
+      "persian": "خارج از کشور",
+      "learned": false,
+      "dateAdded": "2025-01-03",
+      "difficulty": "medium"
+    },
+    {
+      "id": 12,
+      "word": "accept",
+      "pos": "verb",
+      "level": "A2",
+      "definition": "agree to receive or take something",
+      "family": ["acceptance (n)", "acceptable (adj)", "unacceptable (adj)"],
+      "synonyms": ["receive", "take", "agree to", "approve"],
+      "opposites": ["reject", "refuse", "decline", "deny"],
+      "example": "I accept your invitation to the party.",
+      "persian": "قبول کردن، پذیرفتن",
+      "learned": false,
+      "dateAdded": "2025-01-03",
+      "difficulty": "medium"
+    },
+    {
+      "id": 13,
+      "word": "accident",
+      "pos": "noun",
+      "level": "A2",
+      "definition": "an unfortunate event that happens unexpectedly",
+      "family": ["accidental (adj)", "accidentally (adv)"],
+      "synonyms": ["crash", "mishap", "incident", "collision"],
+      "opposites": ["intention", "purpose", "plan"],
+      "example": "There was a car accident on the highway yesterday.",
+      "persian": "حادثه، تصادف",
+      "learned": false,
+      "dateAdded": "2025-01-03",
+      "difficulty": "medium"
+    },
+    {
+      "id": 14,
+      "word": "achieve",
+      "pos": "verb",
+      "level": "A2",
+      "definition": "successfully reach a goal or complete something",
+      "family": ["achievement (n)", "achievable (adj)", "achiever (n)"],
+      "synonyms": ["accomplish", "attain", "reach", "succeed"],
+      "opposites": ["fail", "lose"],
+      "example": "She achieved her dream of becoming a doctor.",
+      "persian": "به دست آوردن، موفق شدن",
+      "learned": false,
+      "dateAdded": "2025-01-03",
+      "difficulty": "medium"
+    },
+    {
+      "id": 15,
+      "word": "absolutely",
+      "pos": "adverb",
+      "level": "B1",
+      "definition": "completely and totally",
+      "family": ["absolute (adj)"],
+      "synonyms": ["completely", "totally", "entirely", "utterly"],
+      "opposites": ["partially", "incompletely"],
+      "example": "You are absolutely right about that!",
+      "persian": "کاملاً، مطلقاً",
+      "learned": false,
+      "dateAdded": "2025-01-03",
+      "difficulty": "medium"
+    },
+    {
+      "id": 16,
+      "word": "academic",
+      "pos": "adjective",
+      "level": "B1",
+      "definition": "relating to education and scholarship",
+      "family": ["academy (n)", "academically (adv)", "academician (n)"],
+      "synonyms": ["educational", "scholarly", "intellectual"],
+      "opposites": ["practical", "vocational"],
+      "example": "Academic success is very important for university.",
+      "persian": "دانشگاهی، علمی، آکادمیک",
+      "learned": false,
+      "dateAdded": "2025-01-03",
+      "difficulty": "medium"
+    },
+    {
+      "id": 17,
+      "word": "access",
+      "pos": "noun",
+      "level": "B1",
+      "definition": "the means or opportunity to approach or use something",
+      "family": ["accessible (adj)", "accessibility (n)", "inaccessible (adj)"],
+      "synonyms": ["entry", "entrance", "admission", "approach"],
+      "opposites": ["denial", "restriction"],
+      "example": "Students have free access to the library.",
+      "persian": "دسترسی",
+      "learned": false,
+      "dateAdded": "2025-01-03",
+      "difficulty": "medium"
+    },
+    {
+      "id": 18,
+      "word": "admire",
+      "pos": "verb",
+      "level": "B1",
+      "definition": "regard with respect or warm approval",
+      "family": ["admiration (n)", "admirable (adj)", "admirer (n)"],
+      "synonyms": ["respect", "esteem", "appreciate", "look up to"],
+      "opposites": ["despise", "dislike", "scorn"],
+      "example": "I admire your courage and determination.",
+      "persian": "تحسین کردن",
+      "learned": false,
+      "dateAdded": "2025-01-03",
+      "difficulty": "medium"
+    },
+    {
+      "id": 19,
+      "word": "abandon",
+      "pos": "verb",
+      "level": "B2",
+      "definition": "leave completely and finally",
+      "family": ["abandonment (n)", "abandoned (adj)"],
+      "synonyms": ["desert", "leave", "forsake", "give up"],
+      "opposites": ["keep", "maintain", "continue", "support"],
+      "example": "He abandoned his old car on the street.",
+      "persian": "رها کردن، ترک کردن",
+      "learned": false,
+      "dateAdded": "2025-01-03",
+      "difficulty": "hard"
+    },
+    {
+      "id": 20,
+      "word": "absolute",
+      "pos": "adjective",
+      "level": "B2",
+      "definition": "complete and total",
+      "family": ["absolutely (adv)"],
+      "synonyms": ["complete", "total", "utter", "perfect"],
+      "opposites": ["partial", "incomplete", "relative"],
+      "example": "Absolute silence is required during the exam.",
+      "persian": "کامل، مطلق",
+      "learned": false,
+      "dateAdded": "2025-01-03",
+      "difficulty": "hard"
+    },
+    {
+      "id": 21,
+      "word": "ambiguous",
+      "pos": "adjective",
+      "level": "C1",
+      "definition": "having more than one possible meaning; unclear",
+      "family": ["ambiguity (n)", "ambiguously (adv)", "unambiguous (adj)"],
+      "synonyms": ["unclear", "vague", "equivocal", "cryptic"],
+      "opposites": ["clear", "unambiguous", "explicit", "definite"],
+      "example": "The politician's statement was deliberately ambiguous.",
+      "persian": "مبهم، دو پهلو",
+      "learned": false,
+      "dateAdded": "2025-01-03",
+      "difficulty": "hard"
+    },
+    {
+      "id": 22,
+      "word": "articulate",
+      "pos": "verb",
+      "level": "C1",
+      "definition": "express thoughts or feelings clearly in words",
+      "family": ["articulation (n)", "inarticulate (adj)", "articulated (adj)"],
+      "synonyms": ["express", "voice", "communicate", "enunciate"],
+      "opposites": ["mumble", "stammer", "falter"],
+      "example": "She was able to articulate her concerns very clearly.",
+      "persian": "بیان کردن، روشن سخن گفتن",
+      "learned": false,
+      "dateAdded": "2025-01-03",
+      "difficulty": "hard"
+    },
+    {
+      "id": 23,
+      "word": "alleviate",
+      "pos": "verb",
+      "level": "C2",
+      "definition": "make pain, suffering, or a problem less severe",
+      "family": ["alleviation (n)"],
+      "synonyms": ["relieve", "ease", "mitigate", "assuage", "palliate"],
+      "opposites": ["aggravate", "worsen", "intensify", "exacerbate"],
+      "example": "The medication helped to alleviate the patient's pain.",
+      "persian": "تسکین دادن، کاهش دادن",
+      "learned": false,
+      "dateAdded": "2025-01-03",
+      "difficulty": "hard"
+    },
+    {
+      "id": 24,
+      "word": "ephemeral",
+      "pos": "adjective",
+      "level": "C2",
+      "definition": "lasting for a very short time; transient",
+      "family": ["ephemerally (adv)"],
+      "synonyms": ["transient", "fleeting", "momentary", "short-lived", "evanescent"],
+      "opposites": ["permanent", "eternal", "enduring", "lasting"],
+      "example": "The beauty of cherry blossoms is ephemeral, lasting only a few days.",
+      "persian": "زودگذر، ناپایدار",
+      "learned": false,
+      "dateAdded": "2025-01-03",
+      "difficulty": "hard"
+    }
+  ],
+  "statistics": {
+    "byLevel": {
+      "A1": {
+        "total": 8,
+        "learned": 0,
+        "notLearned": 8,
+        "percentComplete": 0
+      },
+      "A2": {
+        "total": 6,
+        "learned": 0,
+        "notLearned": 6,
+        "percentComplete": 0
+      },
+      "B1": {
+        "total": 4,
+        "learned": 0,
+        "notLearned": 4,
+        "percentComplete": 0
+      },
+      "B2": {
+        "total": 2,
+        "learned": 0,
+        "notLearned": 2,
+        "percentComplete": 0
+      },
+      "C1": {
+        "total": 2,
+        "learned": 0,
+        "notLearned": 2,
+        "percentComplete": 0
+      },
+      "C2": {
+        "total": 2,
+        "learned": 0,
+        "notLearned": 2,
+        "percentComplete": 0
+      }
+    },
+    "byPartOfSpeech": {
+      "noun": 6,
+      "verb": 6,
+      "adjective": 5,
+      "adverb": 3,
+      "preposition": 2,
+      "article": 1
+    },
+    "byDifficulty": {
+      "easy": 8,
+      "medium": 10,
+      "hard": 6
+    }
+  },
+  "instructions": {
+    "howToUse": [
+      "1. Each word has a unique ID number for easy tracking",
+      "2. Check 'wordCounts' in metadata to see progress by level",
+      "3. Mark 'learned: true' when you master a word",
+      "4. Use 'statistics' section to track your progress",
+      "5. The 'difficulty' field helps you prioritize learning"
+    ],
+    "dataStructure": {
+      "id": "Unique number identifier for each word (1-3000)",
+      "word": "The vocabulary word",
+      "pos": "Part of speech (noun, verb, adjective, etc.)",
+      "level": "CEFR level (A1, A2, B1, B2, C1, C2)",
+      "definition": "Clear English definition",
+      "family": "Related words (word family)",
+      "synonyms": "Words with similar meaning",
+      "opposites": "Words with opposite meaning",
+      "example": "Example sentence using the word",
+      "persian": "Persian/Farsi translation",
+      "learned": "Boolean to track if you've learned this word",
+      "dateAdded": "When the word was added to your list",
+      "difficulty": "easy/medium/hard based on level"
+    },
+    "expandingTheList": [
+      "This template contains 24 sample words across all CEFR levels (A1-C2)",
+      "Distribution: 8 A1, 6 A2, 4 B1, 2 B2, 2 C1, 2 C2",
+      "Simply paste more words in the same JSON format to expand the database",
+      "Update wordCounts in metadata when adding new words",
+      "The app will automatically detect and display all levels dynamically",
+      "Suggested targets: A1=800, A2=1000, B1=800, B2=400, C1=500, C2=500"
+    ]
+  }
+}
