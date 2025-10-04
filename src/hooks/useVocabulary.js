@@ -78,6 +78,13 @@ export const useVocabulary = (userId = null) => {
         }
         
         setVocabularyData(data);
+        
+        // Set current index to first unlearned word (if any)
+        const firstUnlearnedIndex = data.vocabulary.findIndex(word => !word.learned);
+        if (firstUnlearnedIndex !== -1) {
+          setCurrentWordIndex(firstUnlearnedIndex);
+        }
+        
         setLoading(false);
       } catch (err) {
         console.error('Error loading vocabulary:', err);
