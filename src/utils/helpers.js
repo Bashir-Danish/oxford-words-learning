@@ -221,17 +221,17 @@ export const validateSentence = (sentence, family) => {
  */
 export const getEncouragementMessage = (score, wordsUsed) => {
   if (score >= 90) {
-    return "Outstanding! Your sentence is excellent! 🌟";
+    return "Outstanding! Your sentence is excellent!";
   } else if (score >= 80) {
-    return "Excellent work! You're doing great! 🎉";
+    return "Excellent work! You're doing great!";
   } else if (score >= 70) {
-    return "Very good! Keep up the great work! 👏";
+    return "Very good! Keep up the great work!";
   } else if (score >= 60) {
-    return "Good job! You're making progress! 👍";
+    return "Good job! You're making progress!";
   } else if (score >= 50) {
-    return "Nice try! Keep practicing! 💪";
+    return "Nice try! Keep practicing!";
   } else {
-    return "Good start! Let's try to improve it! 😊";
+    return "Good start! Let's try to improve it!";
   }
 };
 
@@ -276,6 +276,31 @@ export const removeFromLocalStorage = (key) => {
   } catch (error) {
     console.error('Error removing from localStorage:', error);
   }
+};
+
+// ==================== USER-SPECIFIC LOCAL STORAGE ====================
+
+/**
+ * Save user-specific data to localStorage
+ * @param {string} userId - User ID
+ * @param {string} key - Storage key
+ * @param {*} data - Data to save
+ */
+export const saveUserData = (userId, key, data) => {
+  const userKey = `${userId}_${key}`;
+  saveToLocalStorage(userKey, data);
+};
+
+/**
+ * Load user-specific data from localStorage
+ * @param {string} userId - User ID
+ * @param {string} key - Storage key
+ * @param {*} defaultValue - Default value if not found
+ * @returns {*} Loaded data or default value
+ */
+export const loadUserData = (userId, key, defaultValue = null) => {
+  const userKey = `${userId}_${key}`;
+  return loadFromLocalStorage(userKey, defaultValue);
 };
 
 // ==================== PROGRESS TRACKING ====================

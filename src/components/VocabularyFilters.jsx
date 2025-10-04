@@ -1,3 +1,5 @@
+import { Search, Check } from 'lucide-react';
+
 /**
  * VocabularyFilters - Component for filtering vocabulary by level, learned status, and search
  */
@@ -44,12 +46,12 @@ const VocabularyFilters = ({ filters, onFiltersChange, statistics }) => {
     <div className="bg-white rounded-lg shadow-md p-4 sm:p-5 animate-slideDown">
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-lg sm:text-xl font-bold text-gray-800 flex items-center gap-2">
-          <span>🔍</span>
+          <Search className="w-4 h-4" />
           <span>Filter Words</span>
         </h3>
         {hasActiveFilters && (
           <button 
-            className="px-3 py-1.5 bg-red-500 text-white rounded-lg text-xs sm:text-sm font-semibold hover:bg-red-600 transition-colors"
+            className="px-3 py-1 bg-red-500 text-white rounded-lg text-xs sm:text-sm font-semibold hover:bg-red-600 transition-colors"
             onClick={clearFilters}
           >
             Clear All
@@ -137,7 +139,7 @@ const VocabularyFilters = ({ filters, onFiltersChange, statistics }) => {
             }`}
             onClick={() => handleLearnedChange('learned')}
           >
-            ✓ Learned
+            <span className="inline-flex items-center gap-1"><Check className="w-3.5 h-3.5" /> Learned</span>
             {statistics && <span className="ml-1 opacity-90 text-[10px]">({statistics.learnedWords})</span>}
           </button>
         </div>

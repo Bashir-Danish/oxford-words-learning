@@ -1,3 +1,5 @@
+import { BarChart3, Check, Circle, BookOpen, Target, Sprout, Leaf, Trees, Trophy, Lightbulb } from 'lucide-react';
+
 /**
  * VocabularyStatistics - Displays comprehensive learning statistics and progress
  */
@@ -26,7 +28,9 @@ const VocabularyStatistics = ({ statistics }) => {
 
   return (
     <div className="space-y-4 sm:space-y-6 animate-fadeIn">
-      <h2 className="text-2xl sm:text-3xl font-bold text-center text-gray-800 mb-4">📊 Your Progress</h2>
+      <h2 className="text-2xl sm:text-3xl font-bold text-center text-gray-800 mb-4 flex items-center justify-center gap-2">
+        <BarChart3 className="w-6 h-6 text-indigo-600" /> Your Progress
+      </h2>
 
       {/* Overall Progress */}
       <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
@@ -81,8 +85,10 @@ const VocabularyStatistics = ({ statistics }) => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {Object.entries(byLevel)
             .sort((a, b) => {
-              const order = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
-              return order.indexOf(a[0]) - order.indexOf(b[0]);
+              const rank = { a1: 0, a2: 1, b1: 2, b2: 3, c1: 4, c2: 5 };
+              const ra = rank[a[0].toLowerCase()] ?? 999;
+              const rb = rank[b[0].toLowerCase()] ?? 999;
+              return ra - rb; // left → right: easy → hard
             })
             .map(([level, stats]) => (
               <div key={level} className="bg-gradient-to-br from-gray-50 to-white border border-gray-200 rounded-lg p-3 sm:p-4 hover:shadow-md transition-shadow">
@@ -97,9 +103,9 @@ const VocabularyStatistics = ({ statistics }) => {
                   />
                 </div>
                 <div className="flex flex-wrap gap-1.5 text-[10px] text-gray-600">
-                  <span className="bg-green-100 text-green-700 px-1.5 py-0.5 rounded">✓ {stats.learned}</span>
-                  <span className="bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded">○ {stats.notLearned}</span>
-                  <span className="bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">📚 {stats.total}</span>
+                  <span className="bg-green-100 text-green-700 px-1.5 py-0.5 rounded inline-flex items-center gap-1"><Check className="w-3 h-3" /> {stats.learned}</span>
+                  <span className="bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded inline-flex items-center gap-1"><Circle className="w-3 h-3" /> {stats.notLearned}</span>
+                  <span className="bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded inline-flex items-center gap-1"><BookOpen className="w-3 h-3" /> {stats.total}</span>
                 </div>
               </div>
             ))}
@@ -108,51 +114,51 @@ const VocabularyStatistics = ({ statistics }) => {
 
       {/* Learning Milestones */}
       <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
-        <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-4">🎯 Milestones</h3>
+        <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-4 flex items-center gap-2"><Target className="w-5 h-5" /> Milestones</h3>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
           <div className={`relative p-3 sm:p-4 rounded-lg text-center transition-all ${
             learnedWords >= 10 
               ? 'bg-gradient-to-br from-green-400 to-green-600 text-white shadow-md' 
               : 'bg-gray-100 text-gray-600 border border-dashed border-gray-300'
           }`}>
-            <div className="text-3xl sm:text-4xl mb-2">🌱</div>
+            <div className="flex items-center justify-center mb-2"><Sprout className="w-8 h-8" /></div>
             <div className="text-xs sm:text-sm font-bold mb-0.5">Getting Started</div>
             <div className="text-[10px] sm:text-xs mb-1 opacity-90">Learn 10 words</div>
             <div className="text-lg sm:text-xl font-bold">{Math.min(learnedWords, 10)}/10</div>
-            {learnedWords >= 10 && <div className="absolute top-1 right-1 text-lg">✓</div>}
+            {learnedWords >= 10 && <div className="absolute top-1 right-1 text-green-600"><Check className="w-4 h-4" /></div>}
           </div>
           <div className={`relative p-3 sm:p-4 rounded-lg text-center transition-all ${
             learnedWords >= 50 
               ? 'bg-gradient-to-br from-blue-400 to-blue-600 text-white shadow-md' 
               : 'bg-gray-100 text-gray-600 border border-dashed border-gray-300'
           }`}>
-            <div className="text-3xl sm:text-4xl mb-2">🌿</div>
+            <div className="flex items-center justify-center mb-2"><Leaf className="w-8 h-8" /></div>
             <div className="text-xs sm:text-sm font-bold mb-0.5">Vocabulary Builder</div>
             <div className="text-[10px] sm:text-xs mb-1 opacity-90">Learn 50 words</div>
             <div className="text-lg sm:text-xl font-bold">{Math.min(learnedWords, 50)}/50</div>
-            {learnedWords >= 50 && <div className="absolute top-1 right-1 text-lg">✓</div>}
+            {learnedWords >= 50 && <div className="absolute top-1 right-1 text-green-600"><Check className="w-4 h-4" /></div>}
           </div>
           <div className={`relative p-3 sm:p-4 rounded-lg text-center transition-all ${
             learnedWords >= 100 
               ? 'bg-gradient-to-br from-purple-400 to-purple-600 text-white shadow-md' 
               : 'bg-gray-100 text-gray-600 border border-dashed border-gray-300'
           }`}>
-            <div className="text-3xl sm:text-4xl mb-2">🌳</div>
+            <div className="flex items-center justify-center mb-2"><Trees className="w-8 h-8" /></div>
             <div className="text-xs sm:text-sm font-bold mb-0.5">Word Master</div>
             <div className="text-[10px] sm:text-xs mb-1 opacity-90">Learn 100 words</div>
             <div className="text-lg sm:text-xl font-bold">{Math.min(learnedWords, 100)}/100</div>
-            {learnedWords >= 100 && <div className="absolute top-1 right-1 text-lg">✓</div>}
+            {learnedWords >= 100 && <div className="absolute top-1 right-1 text-green-600"><Check className="w-4 h-4" /></div>}
           </div>
           <div className={`relative p-3 sm:p-4 rounded-lg text-center transition-all ${
             learnedWords >= 500 
               ? 'bg-gradient-to-br from-yellow-400 to-orange-500 text-white shadow-md' 
               : 'bg-gray-100 text-gray-600 border border-dashed border-gray-300'
           }`}>
-            <div className="text-3xl sm:text-4xl mb-2">🏆</div>
+            <div className="flex items-center justify-center mb-2"><Trophy className="w-8 h-8" /></div>
             <div className="text-xs sm:text-sm font-bold mb-0.5">Oxford Expert</div>
             <div className="text-[10px] sm:text-xs mb-1 opacity-90">Learn 500 words</div>
             <div className="text-lg sm:text-xl font-bold">{Math.min(learnedWords, 500)}/500</div>
-            {learnedWords >= 500 && <div className="absolute top-1 right-1 text-lg">✓</div>}
+            {learnedWords >= 500 && <div className="absolute top-1 right-1 text-green-600"><Check className="w-4 h-4" /></div>}
           </div>
         </div>
       </div>
@@ -160,7 +166,7 @@ const VocabularyStatistics = ({ statistics }) => {
       {/* Learning Tips */}
       <div className="bg-gradient-to-br from-blue-50 to-indigo-100 rounded-lg shadow-sm p-4 sm:p-6 border border-blue-200">
         <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-3 flex items-center gap-2">
-          <span>💡</span>
+          <Lightbulb className="w-5 h-5 text-amber-500" />
           <span>Learning Tips</span>
         </h3>
         <ul className="space-y-2 text-xs sm:text-sm text-gray-700">

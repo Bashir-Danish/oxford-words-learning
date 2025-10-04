@@ -5,6 +5,7 @@
   --animate-fadeIn: fadeIn 0.5s ease-in;
   --animate-slideIn: slideIn 0.3s ease-in-out;
   --animate-slideDown: slideDown 0.3s ease;
+  --animate-slideUp: slideUp 0.4s ease-out;
   --animate-pulse-slow: pulse 2s ease-in-out infinite;
   --animate-bounce-left: bounceLeft 1.5s ease-in-out infinite;
   --animate-bounce-right: bounceRight 1.5s ease-in-out infinite;
@@ -36,6 +37,17 @@
   from {
     opacity: 0;
     transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
   }
   to {
     opacity: 1;

@@ -1,10 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { learnedWordsAPI } from '../services/api';
 
 /**
  * Custom hook to manage Oxford 3000 vocabulary data
  * Loads data from JSON file and provides state management
+ * @param {string} userId - Optional user ID for user-specific storage
  */
-export const useVocabulary = () => {
+export const useVocabulary = (userId = null) => {
   const [vocabularyData, setVocabularyData] = useState(null);
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [filters, setFilters] = useState({
@@ -15,7 +17,10 @@ export const useVocabulary = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Load vocabulary data from JSON file
+  // Track if we've loaded from server
+  const hasLoadedFromServer = useRef(false);
+
+  // Load vocabulary data from JSON file and sync with server
   useEffect(() => {
     const loadVocabularyData = async () => {
       try {
@@ -30,22 +35,46 @@ export const useVocabulary = () => {
         
         const data = await response.json();
         
-        // Load saved progress from localStorage
-        const savedProgress = localStorage.getItem('vocabularyProgress');
-        if (savedProgress) {
-          const progress = JSON.parse(savedProgress);
-          // Merge learned status and modifications from localStorage
-          data.vocabulary = data.vocabulary.map(word => {
-            const savedWord = progress.vocabulary?.find(w => w.id === word.id);
-            if (savedWord) {
-              return { 
-                ...word, 
-                learned: savedWord.learned,
-                lastModified: savedWord.lastModified
-              };
+        // Try to load from server first (if user is logged in)
+        if (userId && !hasLoadedFromServer.current) {
+          try {
+            const serverResponse = await learnedWordsAPI.getAllLearnedWords();
+            if (serverResponse.success) {
+              const learnedWordIds = serverResponse.data; // Array of IDs [1, 2, 3, ...]
+              
+              // Mark words as learned based on server data
+              data.vocabulary = data.vocabulary.map(word => ({
+                ...word,
+                learned: learnedWordIds.includes(word.id)
+              }));
+              
+              hasLoadedFromServer.current = true;
+              console.log(`✅ Loaded ${learnedWordIds.length} learned words from server`);
             }
-            return word;
-          });
+          } catch (serverErr) {
+            console.log('Server sync unavailable, using localStorage');
+          }
+        }
+        
+        // Fallback to localStorage if server failed or no userId
+        if (!hasLoadedFromServer.current) {
+          const storageKey = userId ? `${userId}_vocabularyProgress` : 'vocabularyProgress';
+          const savedProgress = localStorage.getItem(storageKey);
+          if (savedProgress) {
+            const progress = JSON.parse(savedProgress);
+            // Merge learned status from localStorage
+            data.vocabulary = data.vocabulary.map(word => {
+              const savedWord = progress.vocabulary?.find(w => w.id === word.id);
+              if (savedWord) {
+                return { 
+                  ...word, 
+                  learned: savedWord.learned,
+                  lastModified: savedWord.lastModified
+                };
+              }
+              return word;
+            });
+          }
         }
         
         setVocabularyData(data);
@@ -58,15 +87,9 @@ export const useVocabulary = () => {
     };
 
     loadVocabularyData();
-  }, []);
+  }, [userId]);
 
-  // Update statistics whenever vocabulary data changes
-  useEffect(() => {
-    if (vocabularyData) {
-      // Update statistics
-      updateStatistics();
-    }
-  }, [vocabularyData]);
+  // Don't update statistics automatically - compute them on-demand in getStatistics()
 
   // Filter vocabulary based on current filters
   const getFilteredVocabulary = () => {
@@ -109,32 +132,53 @@ export const useVocabulary = () => {
     return filtered[validIndex];
   };
 
-  // Mark word as learned
-  const markWordAsLearned = (wordId, learned = true) => {
+  // Mark word as learned with server sync
+  const markWordAsLearned = useCallback(async (wordId, learned = true) => {
     if (!vocabularyData) return;
     
+    const word = vocabularyData.vocabulary.find(w => w.id === wordId);
+    if (!word) return;
+    
+    // Update local state immediately for instant UI feedback
     setVocabularyData(prev => {
       const updatedData = {
         ...prev,
-        vocabulary: prev.vocabulary.map(word =>
-          word.id === wordId ? { ...word, learned, lastModified: new Date().toISOString() } : word
+        vocabulary: prev.vocabulary.map(w =>
+          w.id === wordId ? { ...w, learned, lastModified: new Date().toISOString() } : w
         )
       };
       
-      // Save to localStorage immediately
+      // Save to localStorage as backup
       const progressData = {
-        vocabulary: updatedData.vocabulary.map(word => ({
-          id: word.id,
-          learned: word.learned,
-          lastModified: word.lastModified
+        vocabulary: updatedData.vocabulary.map(w => ({
+          id: w.id,
+          learned: w.learned,
+          lastModified: w.lastModified
         })),
         lastUpdated: new Date().toISOString()
       };
-      localStorage.setItem('vocabularyProgress', JSON.stringify(progressData));
+      const storageKey = userId ? `${userId}_vocabularyProgress` : 'vocabularyProgress';
+      localStorage.setItem(storageKey, JSON.stringify(progressData));
       
       return updatedData;
     });
-  };
+    
+    // Sync with server in background (if user is logged in)
+    if (userId) {
+      try {
+        await learnedWordsAPI.markWord(wordId, {
+          learned,
+          word: word.word,
+          level: word.level,
+          pos: word.pos
+        });
+        console.log(`✅ Synced word ${wordId} to server`);
+      } catch (err) {
+        console.error('Failed to sync with server:', err);
+        // Still works offline - data is in localStorage
+      }
+    }
+  }, [vocabularyData, userId]);
 
   // Navigate to next word
   const nextWord = () => {
@@ -160,54 +204,9 @@ export const useVocabulary = () => {
     }
   };
 
-  // Update statistics in vocabulary data
-  const updateStatistics = () => {
-    if (!vocabularyData) return;
-    
-    // Initialize stats with empty structure
-    const stats = {
-      byLevel: {},
-      byPartOfSpeech: {},
-      byDifficulty: { easy: 0, medium: 0, hard: 0 }
-    };
-    
-    vocabularyData.vocabulary.forEach(word => {
-      // By level - dynamically create level entries
-      if (!stats.byLevel[word.level]) {
-        stats.byLevel[word.level] = { total: 0, learned: 0, notLearned: 0, percentComplete: 0 };
-      }
-      
-      stats.byLevel[word.level].total++;
-      if (word.learned) {
-        stats.byLevel[word.level].learned++;
-      } else {
-        stats.byLevel[word.level].notLearned++;
-      }
-      
-      // By part of speech
-      stats.byPartOfSpeech[word.pos] = (stats.byPartOfSpeech[word.pos] || 0) + 1;
-      
-      // By difficulty
-      if (word.difficulty && stats.byDifficulty[word.difficulty] !== undefined) {
-        stats.byDifficulty[word.difficulty]++;
-      }
-    });
-    
-    // Calculate percentages
-    Object.keys(stats.byLevel).forEach(level => {
-      const levelStats = stats.byLevel[level];
-      if (levelStats.total > 0) {
-        levelStats.percentComplete = Math.round((levelStats.learned / levelStats.total) * 100);
-      }
-    });
-    
-    setVocabularyData(prev => ({
-      ...prev,
-      statistics: stats
-    }));
-  };
+  // Compute statistics on-demand (no state update to avoid infinite loops)
 
-  // Get statistics
+  // Get statistics (computed on-demand to avoid infinite loops)
   const getStatistics = () => {
     if (!vocabularyData) return null;
     
@@ -215,19 +214,54 @@ export const useVocabulary = () => {
     const learnedWords = vocabularyData.vocabulary.filter(w => w.learned).length;
     const percentComplete = totalWords > 0 ? Math.round((learnedWords / totalWords) * 100) : 0;
     
+    // Compute stats by level
+    const statsByLevel = {};
+    const statsByPos = {};
+    const statsByDifficulty = { easy: 0, medium: 0, hard: 0 };
+    
+    vocabularyData.vocabulary.forEach(word => {
+      // By level
+      if (!statsByLevel[word.level]) {
+        statsByLevel[word.level] = { total: 0, learned: 0, notLearned: 0, percentComplete: 0 };
+      }
+      statsByLevel[word.level].total++;
+      if (word.learned) {
+        statsByLevel[word.level].learned++;
+      } else {
+        statsByLevel[word.level].notLearned++;
+      }
+      
+      // By part of speech
+      statsByPos[word.pos] = (statsByPos[word.pos] || 0) + 1;
+      
+      // By difficulty
+      if (word.difficulty && statsByDifficulty[word.difficulty] !== undefined) {
+        statsByDifficulty[word.difficulty]++;
+      }
+    });
+    
+    // Calculate percentages for levels
+    Object.keys(statsByLevel).forEach(level => {
+      const levelStats = statsByLevel[level];
+      if (levelStats.total > 0) {
+        levelStats.percentComplete = Math.round((levelStats.learned / levelStats.total) * 100);
+      }
+    });
+    
     return {
       totalWords,
       learnedWords,
       notLearnedWords: totalWords - learnedWords,
       percentComplete,
-      byLevel: vocabularyData.statistics?.byLevel || {},
-      byPartOfSpeech: vocabularyData.statistics?.byPartOfSpeech || {},
-      byDifficulty: vocabularyData.statistics?.byDifficulty || {}
+      byLevel: statsByLevel,
+      byPartOfSpeech: statsByPos,
+      byDifficulty: statsByDifficulty
     };
   };
 
   return {
     vocabularyData,
+    setVocabularyData,
     loading,
     error,
     currentWord: getCurrentWord(),
