@@ -279,7 +279,7 @@ const PracticeSection = ({ word, onAwardPoints }) => {
       const { points, correctWords, totalWords, percentage } = result;
       
       // Always save attempt, even with 0 points
-      await saveAndShowPoints(points, correctWords, totalWords, percentage);
+      await saveAndShowPoints(sentence, points, correctWords, totalWords, percentage);
     } else {
       // Use AI validation for original sentences
       setIsValidatingAI(true);
@@ -296,16 +296,16 @@ const PracticeSection = ({ word, onAwardPoints }) => {
           const aiResult = validationResponse.data;
           setAiValidationResult(aiResult);
           
+          // Wait for AI result to be set before saving
           // Always save the attempt, even with 0 points
           await saveAndShowPoints(
+            sentence,
             aiResult.points, // Can be 0
             null, // No word matching for AI validation
             null,
             aiResult.score,
             true // Mark as AI validated
           );
-          
-          setIsValidatingAI(false);
         } else {
           // Fallback to traditional scoring if AI fails
           console.warn('AI validation failed, using traditional scoring');
@@ -313,7 +313,7 @@ const PracticeSection = ({ word, onAwardPoints }) => {
           const { points, correctWords, totalWords, percentage } = result;
           
           // Always save attempt
-          await saveAndShowPoints(points, correctWords, totalWords, percentage);
+          await saveAndShowPoints(sentence, points, correctWords, totalWords, percentage);
         }
       } catch (error) {
         console.error('AI validation error:', error);
@@ -322,15 +322,16 @@ const PracticeSection = ({ word, onAwardPoints }) => {
         const { points, correctWords, totalWords, percentage } = result;
         
         // Always save attempt
-        await saveAndShowPoints(points, correctWords, totalWords, percentage);
+        await saveAndShowPoints(sentence, points, correctWords, totalWords, percentage);
       } finally {
+        // Always turn off loading indicator after everything is done
         setIsValidatingAI(false);
       }
     }
   };
 
   // Helper function to save points and show animation
-  const saveAndShowPoints = async (points, correctWords, totalWords, percentage, aiValidated = false) => {
+  const saveAndShowPoints = async (sentence, points, correctWords, totalWords, percentage, aiValidated = false) => {
     // Always set earned points (even if 0)
     setEarnedPoints(points);
     // Only show success animation if points > 0
@@ -343,7 +344,7 @@ const PracticeSection = ({ word, onAwardPoints }) => {
       const response = await practiceAPI.saveWordPractice(word.id, {
         word: word.word,
         points: points,
-        sentence: userSentence.trim(),
+        sentence: sentence, // Use passed sentence instead of state
         correctWords: correctWords,
         totalWords: totalWords,
         percentage: percentage,
@@ -363,7 +364,7 @@ const PracticeSection = ({ word, onAwardPoints }) => {
     // Call parent callback (optional - for backward compatibility)
     if (onAwardPoints) {
       onAwardPoints(word.id, points, {
-        sentence: userSentence.trim(),
+        sentence: sentence, // Use passed sentence instead of state
         correctWords,
         totalWords,
         percentage,

@@ -263,7 +263,7 @@ const WordCardSlider = ({
             {/* Word Number */}
             <div className="text-center mb-4">
               <span className="inline-block bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium">
-                Word #{currentIndex + 1} of {totalWords}
+                #{currentIndex + 1}
               </span>
             </div>
 
