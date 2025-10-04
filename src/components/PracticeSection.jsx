@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
-import { PencilLine, Star, Lightbulb, Check, Eye, EyeOff, Trash2, BookOpen, Pencil } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { PencilLine, Star, Lightbulb, Check, Eye, EyeOff, Trash2, BookOpen, Pencil, Sparkles } from 'lucide-react';
 import { practiceAPI } from '../services/api';
+import { validateSentenceWithAI, checkSentenceSimilarity, getAIQualityFeedback } from '../services/aiValidation';
 
 /**
  * PracticeSection - Interactive practice area for writing example sentences
@@ -9,12 +10,18 @@ import { practiceAPI } from '../services/api';
 const PracticeSection = ({ word, onAwardPoints }) => {
   const [userSentence, setUserSentence] = useState('');
   const [showExample, setShowExample] = useState(false);
-  const [showSuggestions, setShowSuggestions] = useState(true);
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [earnedPoints, setEarnedPoints] = useState(0);
   const [showPointsAnimation, setShowPointsAnimation] = useState(false);
   const [previousPractice, setPreviousPractice] = useState(null);
   const [loadingPractice, setLoadingPractice] = useState(false);
+  const [isValidatingAI, setIsValidatingAI] = useState(false);
+  const [aiValidationResult, setAiValidationResult] = useState(null);
+  
+  // Refs
+  const textareaRef = useRef(null);
+  const practiceSectionRef = useRef(null);
 
   // Reset when word changes and load previous practice data
   useEffect(() => {
@@ -23,6 +30,8 @@ const PracticeSection = ({ word, onAwardPoints }) => {
     setCurrentWordIndex(0);
     setEarnedPoints(0);
     setShowPointsAnimation(false);
+    setAiValidationResult(null);
+    setIsValidatingAI(false);
     
     // Load previous practice data for this word
     const loadPreviousPractice = async () => {
@@ -46,6 +55,59 @@ const PracticeSection = ({ word, onAwardPoints }) => {
     
     loadPreviousPractice();
   }, [word?.id]);
+
+  // Add keyboard shortcuts
+  // - SHIFT key: Toggle hints ON/OFF
+  // - SPACE key: Focus textarea (if not already focused)
+  // - CTRL key: Scroll practice section to top
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // CTRL key: Scroll to practice section and focus textarea
+      if (e.key === 'Control' && !e.repeat) {
+        e.preventDefault();
+        if (practiceSectionRef.current) {
+          // Smooth scroll to practice section
+          practiceSectionRef.current.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'start' 
+          });
+          // Focus textarea after a short delay
+          setTimeout(() => {
+            if (textareaRef.current) {
+              textareaRef.current.focus();
+            }
+          }, 300);
+        }
+      }
+      
+      // SHIFT key: Toggle hints
+      if (e.key === 'Shift' && !e.repeat) {
+        e.preventDefault();
+        setShowSuggestions(prev => !prev);
+      }
+      
+      // SPACE key: Focus textarea if not already focused
+      if (e.code === 'Space' && e.target.tagName !== 'TEXTAREA') {
+        e.preventDefault();
+        // Focus the textarea using ref
+        if (textareaRef.current) {
+          textareaRef.current.focus();
+          // Add a space at the end if there's existing text
+          if (userSentence) {
+            setUserSentence(prev => prev + ' ');
+          }
+        }
+      }
+      // If SPACE is pressed in textarea, let it work normally (no preventDefault)
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    
+    // Cleanup event listener on unmount
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [userSentence]); // Add userSentence to dependency array
 
   if (!word) return null;
 
@@ -200,49 +262,122 @@ const PracticeSection = ({ word, onAwardPoints }) => {
   const quality = getSentenceQuality();
 
   const handleSubmitSentence = async () => {
-    const result = calculatePoints();
-    const { points, correctWords, totalWords, percentage } = result;
+    const sentence = userSentence.trim();
     
-    if (points > 0 && wordIsUsedInSentence) {
-      setEarnedPoints(points);
-      setShowPointsAnimation(true);
+    if (!sentence || !wordIsUsedInSentence) {
+      return;
+    }
+
+    // Check if user's sentence is similar to the existing example
+    const similarity = checkSentenceSimilarity(sentence, practiceExample);
+    
+    // If sentence is too similar to example, use traditional scoring
+    // If it's original (different from example), use AI validation
+    if (!similarity.isOriginal && similarity.similarity >= 70) {
+      // Use traditional scoring for sentences matching the example
+      const result = calculatePoints();
+      const { points, correctWords, totalWords, percentage } = result;
       
-      // Save to server via new practice API
+      // Always save attempt, even with 0 points
+      await saveAndShowPoints(points, correctWords, totalWords, percentage);
+    } else {
+      // Use AI validation for original sentences
+      setIsValidatingAI(true);
+      setAiValidationResult(null);
+      
       try {
-        const response = await practiceAPI.saveWordPractice(word.id, {
-          word: word.word,
-          points: points,
-          sentence: userSentence.trim(),
-          correctWords: correctWords,
-          totalWords: totalWords,
-          percentage: percentage
-        });
+        const validationResponse = await validateSentenceWithAI(
+          sentence,
+          word.word,
+          word.definition || ''
+        );
         
-        if (response.success) {
-          // Update previous practice data
-          setPreviousPractice(response.data);
-          console.log('✅ Practice saved:', response.data);
+        if (validationResponse.success && validationResponse.data) {
+          const aiResult = validationResponse.data;
+          setAiValidationResult(aiResult);
+          
+          // Always save the attempt, even with 0 points
+          await saveAndShowPoints(
+            aiResult.points, // Can be 0
+            null, // No word matching for AI validation
+            null,
+            aiResult.score,
+            true // Mark as AI validated
+          );
+          
+          setIsValidatingAI(false);
+        } else {
+          // Fallback to traditional scoring if AI fails
+          console.warn('AI validation failed, using traditional scoring');
+          const result = calculatePoints();
+          const { points, correctWords, totalWords, percentage } = result;
+          
+          // Always save attempt
+          await saveAndShowPoints(points, correctWords, totalWords, percentage);
         }
       } catch (error) {
-        console.error('❌ Failed to save practice:', error);
-        // Continue anyway - show success to user
+        console.error('AI validation error:', error);
+        // Fallback to traditional scoring
+        const result = calculatePoints();
+        const { points, correctWords, totalWords, percentage } = result;
+        
+        // Always save attempt
+        await saveAndShowPoints(points, correctWords, totalWords, percentage);
+      } finally {
+        setIsValidatingAI(false);
       }
+    }
+  };
+
+  // Helper function to save points and show animation
+  const saveAndShowPoints = async (points, correctWords, totalWords, percentage, aiValidated = false) => {
+    // Always set earned points (even if 0)
+    setEarnedPoints(points);
+    // Only show success animation if points > 0
+    if (points > 0) {
+      setShowPointsAnimation(true);
+    }
+    
+    // Save to server via new practice API
+    try {
+      const response = await practiceAPI.saveWordPractice(word.id, {
+        word: word.word,
+        points: points,
+        sentence: userSentence.trim(),
+        correctWords: correctWords,
+        totalWords: totalWords,
+        percentage: percentage,
+        aiValidated: aiValidated
+      });
       
-      // Call parent callback (optional - for backward compatibility)
-      if (onAwardPoints) {
-        onAwardPoints(word.id, points, {
-          sentence: userSentence.trim(),
-          correctWords,
-          totalWords,
-          percentage
-        });
+      if (response.success) {
+        // Update previous practice data
+        setPreviousPractice(response.data);
+        console.log('✅ Practice saved:', response.data);
       }
-      
-      // Clear the input after submission to prevent resubmission
-      setUserSentence('');
-      setShowExample(false);
-      
-      // Hide animation after 3 seconds
+    } catch (error) {
+      console.error('❌ Failed to save practice:', error);
+      // Continue anyway - show success to user
+    }
+    
+    // Call parent callback (optional - for backward compatibility)
+    if (onAwardPoints) {
+      onAwardPoints(word.id, points, {
+        sentence: userSentence.trim(),
+        correctWords,
+        totalWords,
+        percentage,
+        aiValidated
+      });
+    }
+    
+    // Clear the input after submission to prevent resubmission
+    setUserSentence('');
+    setShowExample(false);
+    setAiValidationResult(null);
+    
+    // Hide animation after 3 seconds (only if points were awarded)
+    if (points > 0) {
       setTimeout(() => {
         setShowPointsAnimation(false);
       }, 3000);
@@ -250,7 +385,7 @@ const PracticeSection = ({ word, onAwardPoints }) => {
   };
 
   return (
-    <div className="w-full max-w-2xl mx-auto mt-4">
+    <div className="w-full max-w-2xl mx-auto mt-4" ref={practiceSectionRef}>
       <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg shadow-md p-4 sm:p-5 border-2 border-blue-200">
         {/* Header with Points */}
         <div className="flex justify-between items-center mb-3">
@@ -259,10 +394,30 @@ const PracticeSection = ({ word, onAwardPoints }) => {
             <span>Practice Writing</span>
           </h3>
           <div className="flex gap-2 items-center">
-            {/* Points Display */}
-            <div className="bg-gradient-to-r from-yellow-400 to-amber-500 text-yellow-900 px-3 py-1 rounded-lg text-xs font-bold flex items-center gap-1 shadow-sm">
-              <Star className="w-4 h-4" />
-              <span>{word.practicePoints || 0} pts</span>
+            {/* Star Rating Display - 1-5 stars based on points */}
+            <div className="bg-gradient-to-r from-yellow-400 to-amber-500 text-yellow-900 px-2 py-1 rounded-lg text-xs font-bold flex items-center gap-0.5 shadow-sm">
+              {(() => {
+                // Use points from practice data, fallback to word.practicePoints
+                const totalPoints = previousPractice?.points || word.practicePoints || 0;
+                // Calculate stars: 1 star per 5 points, max 5 stars
+                const stars = Math.min(5, Math.max(0, Math.ceil(totalPoints / 5)));
+                
+                return (
+                  <>
+                    {[...Array(5)].map((_, index) => (
+                      <Star
+                        key={index}
+                        className={`w-3.5 h-3.5 ${
+                          index < stars
+                            ? 'fill-yellow-900 text-yellow-900'
+                            : 'text-yellow-700 opacity-30'
+                        }`}
+                      />
+                    ))}
+                    <span className="ml-1 text-[10px]">({totalPoints})</span>
+                  </>
+                );
+              })()}
             </div>
             <button
               onClick={() => setShowSuggestions(!showSuggestions)}
@@ -271,8 +426,11 @@ const PracticeSection = ({ word, onAwardPoints }) => {
                   ? 'bg-green-500 text-white'
                   : 'bg-gray-300 text-gray-700'
               }`}
+              title="Press SHIFT to toggle hints"
             >
-              <Lightbulb className="w-3.5 h-3.5" /> {showSuggestions ? 'Hints ON' : 'Hints OFF'}
+              <Lightbulb className="w-3.5 h-3.5" /> 
+              {showSuggestions ? 'Hints ON' : 'Hints OFF'}
+              <span className="text-[10px] opacity-70 ml-1">(Shift)</span>
             </button>
           </div>
         </div>
@@ -321,13 +479,17 @@ const PracticeSection = ({ word, onAwardPoints }) => {
         )}
 
         {/* Instructions */}
-        <p className="text-xs sm:text-sm text-gray-700 mb-3">
-          Write a sentence using the word <span className="font-bold text-blue-700">"{word.word}"</span>:
-        </p>
+        <div className="mb-3">
+          <p className="text-xs sm:text-sm text-gray-700 mb-1">
+            Write a sentence using the word <span className="font-bold text-blue-700">"{word.word}"</span>:
+          </p>
+          
+        </div>
 
         {/* Textarea */}
         <div className="relative mb-3">
           <textarea
+            ref={textareaRef}
             value={userSentence}
             onChange={(e) => setUserSentence(e.target.value)}
             placeholder={`Type your sentence here using "${word.word}"...`}
@@ -351,6 +513,68 @@ const PracticeSection = ({ word, onAwardPoints }) => {
           )}
         </div>
 
+        {/* AI Validation Loading Indicator */}
+        {isValidatingAI && (
+          <div className="mb-3 bg-gradient-to-r from-purple-100 to-indigo-100 border-2 border-purple-300 rounded-lg p-3 flex items-center gap-3">
+            <Sparkles className="w-5 h-5 text-purple-600 animate-spin" />
+            <div>
+              <p className="text-sm font-semibold text-purple-900">AI is checking your sentence...</p>
+              <p className="text-xs text-purple-700">Please wait</p>
+            </div>
+          </div>
+        )}
+
+        {/* AI Validation Result */}
+        {aiValidationResult && !isValidatingAI && (
+          <div className={`mb-3 rounded-lg p-3 border-2 ${
+            aiValidationResult.isCorrect
+              ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-300'
+              : 'bg-gradient-to-r from-red-50 to-orange-50 border-red-300'
+          }`}>
+            <div className="flex items-start gap-2">
+              <Sparkles className={`w-5 h-5 mt-0.5 ${
+                aiValidationResult.isCorrect ? 'text-green-600' : 'text-red-600'
+              }`} />
+              <div className="flex-1">
+                <p className="text-sm font-semibold mb-1 ${
+                  aiValidationResult.isCorrect ? 'text-green-900' : 'text-red-900'
+                }">AI Evaluation Result:</p>
+                <p className="text-xs mb-2 ${
+                  aiValidationResult.isCorrect ? 'text-green-800' : 'text-red-800'
+                }">{aiValidationResult.feedback}</p>
+                <div className="flex items-center gap-3 text-xs mb-2">
+                  <span className={`font-bold ${
+                    aiValidationResult.isCorrect ? 'text-green-700' : 'text-red-700'
+                  }`}>Score: {aiValidationResult.score}/100</span>
+                  {aiValidationResult.isCorrect && (
+                    <span className="font-bold text-amber-700">Points: +{aiValidationResult.points}</span>
+                  )}
+                </div>
+                
+                {/* Show corrected sentence FIRST if wrong */}
+                {aiValidationResult.correctedSentence && !aiValidationResult.isCorrect && (
+                  <div className="mb-2 p-2 bg-blue-50 rounded border border-blue-300">
+                    <p className="font-semibold mb-1 text-xs text-blue-900">✅ Correct:</p>
+                    <p className="text-xs text-blue-800 font-medium">"{aiValidationResult.correctedSentence}"</p>
+                  </div>
+                )}
+                
+                {/* Then show errors */}
+                {aiValidationResult.errors && aiValidationResult.errors.length > 0 && (
+                  <div className="text-xs text-red-700">
+                    <p className="font-semibold mb-1">Issues found:</p>
+                    <ul className="list-disc list-inside space-y-0.5">
+                      {aiValidationResult.errors.map((error, idx) => (
+                        <li key={idx}>{error}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Word Count & Quality Feedback */}
         <div className="flex flex-wrap justify-between items-center gap-2 mb-3">
           <span className="text-xs text-gray-600">
@@ -358,7 +582,7 @@ const PracticeSection = ({ word, onAwardPoints }) => {
             {wordIsUsedInSentence && <span className="ml-2 text-green-600 font-semibold inline-flex items-center gap-1"><Check className="w-3.5 h-3.5" /> Word used!</span>}
           </span>
           
-          {quality && (
+          {!aiValidationResult && quality && (
             <div className={`text-xs px-3 py-2 rounded-lg font-medium shadow-sm ${
               quality.type === 'success' ? 'bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 border border-green-300' :
               quality.type === 'warning' ? 'bg-gradient-to-r from-yellow-100 to-amber-100 text-yellow-800 border border-yellow-300' :
@@ -373,11 +597,20 @@ const PracticeSection = ({ word, onAwardPoints }) => {
         <div className="flex flex-wrap gap-2 mb-3">
           <button
             onClick={handleSubmitSentence}
-            disabled={!wordIsUsedInSentence || userSentence.trim().length === 0}
+            disabled={!wordIsUsedInSentence || userSentence.trim().length === 0 || isValidatingAI}
             className="flex-1 min-w-[120px] px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded-lg text-sm font-semibold transition-colors flex items-center justify-center gap-1"
           >
-            <Check className="w-4 h-4" />
-            <span>Submit & Get Points</span>
+            {isValidatingAI ? (
+              <>
+                <Sparkles className="w-4 h-4 animate-spin" />
+                <span>Validating...</span>
+              </>
+            ) : (
+              <>
+                <Check className="w-4 h-4" />
+                <span>Submit & Get Points</span>
+              </>
+            )}
           </button>
           <button
             onClick={() => setShowExample(!showExample)}
@@ -449,10 +682,11 @@ const PracticeSection = ({ word, onAwardPoints }) => {
             Scoring System:
           </p>
           <ul className="text-xs text-gray-700 space-y-1">
+            <li>• <span className="font-bold text-purple-700">✨ Write your own sentence:</span> AI will check it and award <span className="font-bold text-green-700">up to 25 points</span></li>
             <li>• Match example words: <span className="font-bold text-blue-700">Up to 20 points</span> (based on correctness)</li>
             <li>• Use the target word: <span className="font-bold text-green-700">+5 bonus points</span></li>
             <li>• Proper grammar (capitalize & punctuate): <span className="font-bold text-indigo-700">+3 bonus points</span></li>
-            <li>• <span className="font-bold text-purple-700">Example:</span> 5/5 correct words = 20 pts, 4/5 = 16 pts, 3/5 = 12 pts</li>
+            <li>• <span className="font-bold text-purple-700">Tip:</span> Be creative! Original sentences get AI validation</li>
           </ul>
         </div>
       </div>

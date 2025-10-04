@@ -152,7 +152,7 @@ function AppNew() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
       {/* Compact Header */}
         <header className="bg-white shadow-md">
-          <div className="max-w-4xl mx-auto px-3 py-3 sm:px-4 sm:py-4">
+          <div className="max-w-4xl mx-auto px-3 py-2 sm:px-4 sm:py-2">
             <div className="flex flex-col sm:flex-row justify-between items-center gap-3">
           <div className="text-center sm:text-left">
             <h1 className="text-xl sm:text-2xl font-bold text-gray-800 flex items-center justify-center sm:justify-start gap-2">
@@ -190,7 +190,7 @@ function AppNew() {
         {/* Compact Tab Navigation */}
         <nav className="sticky top-0 z-40 bg-white shadow-sm border-b border-gray-200">
           <div className="max-w-4xl mx-auto px-3 sm:px-4">
-            <div className="flex justify-center gap-1 py-2">
+            <div className="flex justify-center gap-1 py-1">
           <button
             className={`flex items-center gap-1 px-4 py-2 rounded-lg text-[10px] sm:text-sm font-semibold transition-all ${
               currentMode === 'learn'

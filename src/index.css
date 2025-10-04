@@ -9,6 +9,8 @@
   --animate-pulse-slow: pulse 2s ease-in-out infinite;
   --animate-bounce-left: bounceLeft 1.5s ease-in-out infinite;
   --animate-bounce-right: bounceRight 1.5s ease-in-out infinite;
+  --animate-shimmer: shimmer 2s linear infinite;
+  --animate-progress: progress 1.5s ease-in-out infinite;
 }
 
 @keyframes fadeIn {
@@ -70,6 +72,29 @@
   }
   50% {
     transform: translateX(5px);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes progress {
+  0% {
+    transform: translateX(-100%);
+    width: 0%;
+  }
+  50% {
+    width: 70%;
+  }
+  100% {
+    transform: translateX(100%);
+    width: 100%;
   }
 }
 

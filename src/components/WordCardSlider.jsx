@@ -233,7 +233,7 @@ const WordCardSlider = ({
             {/* Word - Large and centered */}
             <div className="text-center mb-4">
               <h2 className="text-4xl sm:text-5xl font-bold text-gray-800 mb-2">
-                {word.word}
+                {word.word.charAt(0).toUpperCase() + word.word.slice(1)}
               </h2>
               {word.phonetic && (
                 <p className="text-gray-500 text-base">{word.phonetic}</p>
