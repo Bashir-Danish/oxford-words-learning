@@ -151,87 +151,87 @@ function AppNew() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
       {/* Compact Header */}
-      <header className="bg-white shadow-md">
-        <div className="max-w-4xl mx-auto px-3 py-3 sm:px-4 sm:py-4">
-          <div className="flex flex-col sm:flex-row justify-between items-center gap-3">
-            <div className="text-center sm:text-left">
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-800 flex items-center justify-center sm:justify-start gap-2">
-                <BookOpen className="w-5 h-5 text-indigo-600" />
-                <span>Oxford {statistics.totalWords}</span>
-              </h1>
-              <p className="text-gray-600 text-xs sm:text-sm">Master Essential English Vocabulary</p>
-            </div>
-            <div className="flex flex-wrap justify-center sm:justify-end items-center gap-2">
-              <UserProfileSimple
-                currentUser={currentUser}
-                onLogout={handleUserLogout}
-                statistics={statistics}
-              />
-              <div className="flex flex-wrap justify-center gap-2">
-                <div className="bg-gradient-to-br from-green-400 to-green-600 text-white px-2 py-0 rounded-lg shadow-sm text-center min-w-[70px]">
-                  <span className="block text-sm font-bold">{statistics?.learnedWords || 0}</span>
-                  <span className="block text-[10px] opacity-90">Learned</span>
-                </div>
-                <div className="bg-gradient-to-br from-orange-400 to-orange-600 text-white px-2 py-0 rounded-lg shadow-sm text-center min-w-[70px]">
-                  <span className="block text-sm font-bold">{statistics?.notLearnedWords || 0}</span>
-                  <span className="block text-[10px] opacity-90">Remaining</span>
-                </div>
-                <div className="bg-gradient-to-br from-blue-400 to-blue-600 text-white px-2 py-0 rounded-lg shadow-sm text-center min-w-[70px]">
-                  <span className="block text-sm font-bold">{statistics?.percentComplete || 0}%</span>
-                  <span className="block text-[10px] opacity-90">Complete</span>
-                </div>
+        <header className="bg-white shadow-md">
+          <div className="max-w-4xl mx-auto px-3 py-3 sm:px-4 sm:py-4">
+            <div className="flex flex-col sm:flex-row justify-between items-center gap-3">
+          <div className="text-center sm:text-left">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-800 flex items-center justify-center sm:justify-start gap-2">
+              <BookOpen className="w-5 h-5 text-indigo-600" />
+              <span>Oxford {statistics.totalWords}</span>
+            </h1>
+            <p className="text-gray-600 text-xs sm:text-sm">Master Essential English Vocabulary</p>
+          </div>
+          <div className="flex flex-wrap justify-center sm:justify-end items-center gap-2">
+            <UserProfileSimple
+              currentUser={currentUser}
+              onLogout={handleUserLogout}
+              statistics={statistics}
+            />
+            <div className="flex flex-wrap justify-center gap-2">
+              <div className="bg-gradient-to-br from-green-400 to-green-600 text-white px-2 py-0 rounded-lg shadow-sm text-center min-w-[70px]">
+            <span className="block text-sm font-bold">{statistics?.learnedWords || 0}</span>
+            <span className="block text-[10px] opacity-90">Learned</span>
               </div>
-              
+              <div className="bg-gradient-to-br from-orange-400 to-orange-600 text-white px-2 py-0 rounded-lg shadow-sm text-center min-w-[70px]">
+            <span className="block text-sm font-bold">{statistics?.notLearnedWords || 0}</span>
+            <span className="block text-[10px] opacity-90">Remaining</span>
+              </div>
+              <div className="bg-gradient-to-br from-blue-400 to-blue-600 text-white px-2 py-0 rounded-lg shadow-sm text-center min-w-[70px]">
+            <span className="block text-sm font-bold">{statistics?.percentComplete || 0}%</span>
+            <span className="block text-[10px] opacity-90">Complete</span>
+              </div>
+            </div>
+            
+          </div>
             </div>
           </div>
-        </div>
-      </header>
+        </header>
 
-      {/* Compact Tab Navigation */}
-      <nav className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-4xl mx-auto px-3 sm:px-4">
-          <div className="flex justify-center gap-1 py-2">
-            <button
-              className={`flex items-center gap-1 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
-                currentMode === 'learn'
-                  ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md'
-                  : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
-              }`}
-              onClick={() => handleModeChange('learn')}
-            >
-              <BookOpen className="w-4 h-4" />
-              <span>Learn</span>
-            </button>
-            <button
-              className={`flex items-center gap-1 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
-                currentMode === 'filter'
-                  ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md'
-                  : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
-              }`}
-              onClick={() => handleModeChange('filter')}
-            >
-              <Search className="w-4 h-4" />
-              <span>Filter Words</span>
-            </button>
-            <button
-              className={`flex items-center gap-1 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
-                currentMode === 'statistics'
-                  ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md'
-                  : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
-              }`}
-              onClick={() => handleModeChange('statistics')}
-            >
-              <BarChart3 className="w-4 h-4" />
-              <span>Stats</span>
-            </button>
+        {/* Compact Tab Navigation */}
+        <nav className="sticky top-0 z-50 bg-white shadow-sm border-b border-gray-200">
+          <div className="max-w-4xl mx-auto px-3 sm:px-4">
+            <div className="flex justify-center gap-1 py-2">
+          <button
+            className={`flex items-center gap-1 px-4 py-2 rounded-lg text-[10px] sm:text-sm font-semibold transition-all ${
+              currentMode === 'learn'
+            ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md'
+            : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+            }`}
+            onClick={() => handleModeChange('learn')}
+          >
+            <BookOpen className="w-4 h-4" />
+            <span>Learn</span>
+          </button>
+          <button
+            className={`flex items-center gap-1 px-4 py-2 rounded-lg text-[10px] sm:text-sm font-semibold transition-all ${
+              currentMode === 'filter'
+            ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md'
+            : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+            }`}
+            onClick={() => handleModeChange('filter')}
+          >
+            <Search className="w-4 h-4" />
+            <span>Filter Words</span>
+          </button>
+          <button
+            className={`flex items-center gap-1 px-4 py-2 rounded-lg text-[10px] sm:text-sm font-semibold transition-all ${
+              currentMode === 'statistics'
+            ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md'
+            : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+            }`}
+            onClick={() => handleModeChange('statistics')}
+          >
+            <BarChart3 className="w-4 h-4" />
+            <span>Stats</span>
+          </button>
+            </div>
           </div>
-        </div>
-      </nav>
+        </nav>
 
-      {/* Compact Main Content */}
+        {/* Compact Main Content */}
       <main className="max-w-4xl mx-auto px-3 py-4 sm:px-4 sm:py-6">
         {currentMode === 'learn' && (
-          <div className="space-y-4">
+          <div className="space-y-4 animate-fadeIn">
             {/* Word Card Slider */}
             <WordCardSlider
               word={currentWord}

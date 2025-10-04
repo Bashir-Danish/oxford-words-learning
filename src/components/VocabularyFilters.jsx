@@ -43,7 +43,7 @@ const VocabularyFilters = ({ filters, onFiltersChange, statistics }) => {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-4 sm:p-5 animate-slideDown">
+    <div className="bg-white rounded-lg shadow-md p-4 sm:p-5 animate-fadeIn">
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-lg sm:text-xl font-bold text-gray-800 flex items-center gap-2">
           <Search className="w-4 h-4" />
