@@ -148,6 +148,8 @@ const PracticeSection = ({ word, onAwardPoints }) => {
     setUserSentence('');
     setShowExample(false);
     setCurrentWordIndex(0);
+    setAiValidationResult(null); // Clear AI feedback when clearing sentence
+    setShowPointsAnimation(false); // Clear success animation
   };
 
   const handleUseSuggestion = () => {
@@ -381,7 +383,8 @@ const PracticeSection = ({ word, onAwardPoints }) => {
     // Clear the input after submission to prevent resubmission
     setUserSentence('');
     setShowExample(false);
-    setAiValidationResult(null);
+    // DON'T clear AI result here - let user see the feedback!
+    // It will be cleared when they submit next sentence or word changes
   };
 
   return (
@@ -491,7 +494,16 @@ const PracticeSection = ({ word, onAwardPoints }) => {
           <textarea
             ref={textareaRef}
             value={userSentence}
-            onChange={(e) => setUserSentence(e.target.value)}
+            onChange={(e) => {
+              const newValue = e.target.value;
+              setUserSentence(newValue);
+              // Clear AI feedback when user starts typing a new sentence
+              // (textarea was empty and now has text)
+              if (aiValidationResult && userSentence === '' && newValue.length > 0) {
+                setAiValidationResult(null);
+                setShowPointsAnimation(false);
+              }
+            }}
             placeholder={`Type your sentence here using "${word.word}"...`}
             className="w-full px-3 py-3 border-2 border-blue-300 rounded-lg focus:outline-none focus:border-blue-500 transition-colors text-sm resize-none"
             rows={3}
