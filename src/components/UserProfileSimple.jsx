@@ -35,7 +35,7 @@ function UserProfileSimple({ currentUser, onLogout, statistics }) {
   if (!currentUser) return null;
 
   return (
-    <div className="relative z-40">
+    <div className="relative z-50">
       <div 
         className="flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-200 rounded-full cursor-pointer transition-all duration-200 font-medium hover:bg-gray-50 hover:border-indigo-400 hover:shadow-sm"
         onClick={() => setShowMenu(!showMenu)}
@@ -50,11 +50,11 @@ function UserProfileSimple({ currentUser, onLogout, statistics }) {
       {showMenu && (
         <>
           <div 
-            className="fixed inset-0 z-30" 
+            className="fixed inset-0 z-[100]" 
             onClick={() => setShowMenu(false)}
           />
-          {/* Mobile: Fixed centered modal, Desktop: Absolute dropdown */}
-          <div className="fixed sm:absolute top-1/2 sm:top-[calc(100%+8px)] left-1/2 sm:left-auto right-auto sm:right-0 -translate-x-1/2 sm:translate-x-0 -translate-y-1/2 sm:translate-y-0 bg-white border border-gray-200 rounded-xl shadow-2xl w-[90vw] max-w-[320px] sm:w-auto sm:min-w-[280px] sm:max-w-[400px] z-50 animate-slideDown pointer-events-auto">
+           {/* Mobile: Fixed centered modal, Desktop: Absolute dropdown */}
+          <div className="fixed sm:absolute top-1/2 sm:top-[calc(100%+8px)] left-1/2 sm:left-auto right-auto sm:right-0 -translate-x-1/2 sm:translate-x-0 -translate-y-1/2 sm:translate-y-0 bg-white border border-gray-200 rounded-xl shadow-2xl w-[90vw] max-w-[320px] sm:w-auto sm:min-w-[280px] sm:max-w-[400px] z-[101] animate-slideDown pointer-events-auto">
             {/* User Info */}
             <div className="p-3 sm:p-4 text-center border-b border-gray-200">
               <div className="mx-auto w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-indigo-100 flex items-center justify-center mb-2">

@@ -188,7 +188,7 @@ function AppNew() {
         </header>
 
         {/* Compact Tab Navigation */}
-        <nav className="sticky top-0 z-50 bg-white shadow-sm border-b border-gray-200">
+        <nav className="sticky top-0 z-40 bg-white shadow-sm border-b border-gray-200">
           <div className="max-w-4xl mx-auto px-3 sm:px-4">
             <div className="flex justify-center gap-1 py-2">
           <button
