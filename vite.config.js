@@ -10,4 +10,21 @@ export default defineConfig({
       plugins: [tailwindcss()],
     },
   },
+  // Ensure JSON files are bundled inline, not fetched via network
+  json: {
+    stringify: false, // Import as parsed object, not string
+  },
+  build: {
+    // Optimize bundle size
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Separate vendor chunks
+          'react-vendor': ['react', 'react-dom'],
+        },
+      },
+    },
+    // Increase chunk size warning limit
+    chunkSizeWarningLimit: 1000,
+  },
 })

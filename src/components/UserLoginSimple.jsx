@@ -153,7 +153,10 @@ function UserLoginSimple({ onLogin }) {
         )}
 
         {/* Form */}
-        <form onSubmit={isSignup ? handleSignup : handleLogin} autoComplete="off">
+        <form onSubmit={isSignup ? handleSignup : handleLogin} autoComplete={isSignup ? "off" : "on"}>
+          {/* Hidden field to help browser identify the form */}
+          <input type="hidden" name="form-name" value="oxford-word-login" />
+          
           {/* Username */}
           <div className="mb-3">
             <label className="block mb-1 text-xs font-medium text-gray-700">
@@ -166,7 +169,7 @@ function UserLoginSimple({ onLogin }) {
               onChange={(e) => setUsername(e.target.value)}
               placeholder="Enter your username"
               className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg text-sm transition-all bg-white text-gray-800 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-              autoComplete="off"
+              autoComplete={isSignup ? "off" : "username"}
               autoFocus
               disabled={loading}
             />
@@ -184,7 +187,7 @@ function UserLoginSimple({ onLogin }) {
               onChange={(e) => setPassword(e.target.value)}
               placeholder={isSignup ? "Create a password" : "Enter your password"}
               className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg text-sm transition-all bg-white text-gray-800 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-              autoComplete="new-password"
+              autoComplete={isSignup ? "new-password" : "current-password"}
               disabled={loading}
             />
           </div>

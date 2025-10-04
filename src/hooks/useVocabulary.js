@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { learnedWordsAPI } from '../services/api';
+import { getVocabularyData } from '../data/vocabularyData';
 
 /**
  * Custom hook to manage Oxford 3000 vocabulary data
@@ -20,20 +21,14 @@ export const useVocabulary = (userId = null) => {
   // Track if we've loaded from server
   const hasLoadedFromServer = useRef(false);
 
-  // Load vocabulary data from JSON file and sync with server
+  // Load vocabulary data from bundled module and sync with server
   useEffect(() => {
     const loadVocabularyData = async () => {
       try {
         setLoading(true);
         
-        // Try to load from the JSON file
-        const response = await fetch('/OXFORD_3000_ENHANCED_TEMPLATE.json');
-        
-        if (!response.ok) {
-          throw new Error('Failed to load vocabulary data');
-        }
-        
-        const data = await response.json();
+        // Load from bundled JS module (no network request, faster!)
+        const data = await getVocabularyData();
         
         // Try to load from server first (if user is logged in)
         if (userId && !hasLoadedFromServer.current) {
@@ -56,26 +51,8 @@ export const useVocabulary = (userId = null) => {
           }
         }
         
-        // Fallback to localStorage if server failed or no userId
-        if (!hasLoadedFromServer.current) {
-          const storageKey = userId ? `${userId}_vocabularyProgress` : 'vocabularyProgress';
-          const savedProgress = localStorage.getItem(storageKey);
-          if (savedProgress) {
-            const progress = JSON.parse(savedProgress);
-            // Merge learned status from localStorage
-            data.vocabulary = data.vocabulary.map(word => {
-              const savedWord = progress.vocabulary?.find(w => w.id === word.id);
-              if (savedWord) {
-                return { 
-                  ...word, 
-                  learned: savedWord.learned,
-                  lastModified: savedWord.lastModified
-                };
-              }
-              return word;
-            });
-          }
-        }
+        // If server sync failed, start with fresh data
+        // No localStorage fallback - all data comes from server only
         
         setVocabularyData(data);
         
@@ -147,28 +124,12 @@ export const useVocabulary = (userId = null) => {
     if (!word) return;
     
     // Update local state immediately for instant UI feedback
-    setVocabularyData(prev => {
-      const updatedData = {
-        ...prev,
-        vocabulary: prev.vocabulary.map(w =>
-          w.id === wordId ? { ...w, learned, lastModified: new Date().toISOString() } : w
-        )
-      };
-      
-      // Save to localStorage as backup
-      const progressData = {
-        vocabulary: updatedData.vocabulary.map(w => ({
-          id: w.id,
-          learned: w.learned,
-          lastModified: w.lastModified
-        })),
-        lastUpdated: new Date().toISOString()
-      };
-      const storageKey = userId ? `${userId}_vocabularyProgress` : 'vocabularyProgress';
-      localStorage.setItem(storageKey, JSON.stringify(progressData));
-      
-      return updatedData;
-    });
+    setVocabularyData(prev => ({
+      ...prev,
+      vocabulary: prev.vocabulary.map(w =>
+        w.id === wordId ? { ...w, learned, lastModified: new Date().toISOString() } : w
+      )
+    }));
     
     // Sync with server in background (if user is logged in)
     if (userId) {

@@ -17,12 +17,15 @@ function AppNew() {
   // User state
   const [currentUser, setCurrentUser] = useState(null);
   const [userLoading, setUserLoading] = useState(true);
+  const [showLoader, setShowLoader] = useState(true);
   
   const [currentMode, setCurrentMode] = useState('learn');
   
   // Check for logged in user on mount (verify token)
   useEffect(() => {
     const verifyToken = async () => {
+      const startTime = Date.now();
+      
       try {
         const response = await authAPI.verify();
         if (response.success && response.user) {
@@ -31,7 +34,13 @@ function AppNew() {
       } catch (error) {
         console.log('No valid session found');
       } finally {
-        setUserLoading(false);
+        // Ensure loader shows for at least 500ms to prevent flash
+        const elapsedTime = Date.now() - startTime;
+        const remainingTime = Math.max(500 - elapsedTime, 0);
+        
+        setTimeout(() => {
+          setUserLoading(false);
+        }, remainingTime);
       }
     };
     
@@ -39,7 +48,7 @@ function AppNew() {
   }, []);
   
   const {
-    loading,
+    loading: vocabularyLoading,
     error,
     currentWord,
     currentWordIndex,
@@ -53,6 +62,19 @@ function AppNew() {
     vocabularyData,
     setVocabularyData
   } = useVocabulary(currentUser?.id);
+  
+  // Manage vocabulary loading with minimum display time
+  useEffect(() => {
+    if (currentUser && vocabularyLoading) {
+      setShowLoader(true);
+    } else if (currentUser && !vocabularyLoading) {
+      // Add a small delay to prevent flash
+      const timer = setTimeout(() => {
+        setShowLoader(false);
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [currentUser, vocabularyLoading]);
 
   // Handle mode changes
   const handleModeChange = (mode) => {
@@ -82,10 +104,7 @@ function AppNew() {
   if (userLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <div className="inline-block animate-spin rounded-full h-16 w-16 border-4 border-blue-500 border-t-transparent"></div>
-          <h2 className="text-2xl font-bold text-gray-800">Loading...</h2>
-        </div>
+        <div className="inline-block animate-spin rounded-full h-16 w-16 border-4 border-blue-500 border-t-transparent"></div>
       </div>
     );
   }
@@ -96,14 +115,10 @@ function AppNew() {
   }
   
   // Loading state for vocabulary data
-  if (loading) {
+  if (showLoader && (vocabularyLoading || !vocabularyData)) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <div className="inline-block animate-spin rounded-full h-16 w-16 border-4 border-blue-500 border-t-transparent"></div>
-          <h2 className="text-2xl font-bold text-gray-800">Loading Oxford 3000 Vocabulary...</h2>
-          <p className="text-gray-600">Please wait while we prepare your learning experience</p>
-        </div>
+        <div className="inline-block animate-spin rounded-full h-16 w-16 border-4 border-blue-500 border-t-transparent"></div>
       </div>
     );
   }
