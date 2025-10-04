@@ -1,12 +1,9 @@
 /**
  * Vocabulary Data Loader
  * This module loads the Oxford 3000 vocabulary data efficiently
- * by importing it directly as a JS module instead of fetching via network
- * Also uses IndexedDB for persistent caching
+ * Uses fetch from public folder + IndexedDB caching for optimal performance
  */
 
-// Import the JSON data directly (Vite will bundle this into the JS, no network request!)
-import vocabularyJson from './OXFORD_3000_ENHANCED_TEMPLATE.json';
 import { getFromCache, saveToCache, isIndexedDBSupported } from '../utils/vocabularyCache';
 
 // Cache the processed data in memory
@@ -33,8 +30,16 @@ export const getVocabularyData = async () => {
     }
   }
 
-  // Layer 3: Load from bundled module (no network request!)
-  console.log('📦 Loading vocabulary from bundled data...');
+  // Layer 3: Fetch from public folder
+  console.log('🌐 Fetching vocabulary data...');
+  const response = await fetch('/OXFORD_3000_ENHANCED_TEMPLATE.json');
+  
+  if (!response.ok) {
+    throw new Error('Failed to load vocabulary data');
+  }
+  
+  const vocabularyJson = await response.json();
+  
   cachedData = {
     ...vocabularyJson,
     vocabulary: vocabularyJson.vocabulary.map(word => ({
@@ -81,6 +86,3 @@ export const getCompressedVocabularyData = async () => {
 export const clearCache = () => {
   cachedData = null;
 };
-
-// Export the raw data for direct access if needed
-export { vocabularyJson };
