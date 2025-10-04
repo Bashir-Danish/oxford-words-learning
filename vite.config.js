@@ -18,13 +18,21 @@ export default defineConfig({
     // Optimize bundle size
     rollupOptions: {
       output: {
-        manualChunks: {
-          // Separate vendor chunks
-          'react-vendor': ['react', 'react-dom'],
+        manualChunks(id) {
+          // Split vendor chunks for better caching
+          if (id.includes('node_modules')) {
+            if (id.includes('react') || id.includes('react-dom')) {
+              return 'react-vendor';
+            }
+            if (id.includes('lucide-react')) {
+              return 'icons';
+            }
+            return 'vendor';
+          }
         },
       },
     },
-    // Increase chunk size warning limit
-    chunkSizeWarningLimit: 1000,
+    // Increase chunk size warning limit (JSON data is large)
+    chunkSizeWarningLimit: 1500,
   },
 })
