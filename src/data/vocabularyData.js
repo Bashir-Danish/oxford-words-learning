@@ -1,36 +1,23 @@
 /**
  * Vocabulary Data Loader
  * This module loads the Oxford 3000 vocabulary data efficiently
- * Uses fetch from public folder + IndexedDB caching for optimal performance
+ * Uses fetch from public folder with in-memory caching
  */
-
-import { getFromCache, saveToCache, isIndexedDBSupported } from '../utils/vocabularyCache';
 
 // Cache the processed data in memory
 let cachedData = null;
-const CACHE_KEY = 'vocabulary_data_v1';
 
 /**
- * Get vocabulary data (with multi-layer caching)
+ * Get vocabulary data (with memory caching)
  * @returns {Promise<Object>} The vocabulary data
  */
 export const getVocabularyData = async () => {
-  // Layer 1: Check memory cache (fastest)
+  // Check memory cache
   if (cachedData) {
     return cachedData;
   }
 
-  // Layer 2: Check IndexedDB cache (fast)
-  if (isIndexedDBSupported()) {
-    const cachedFromDB = await getFromCache(CACHE_KEY);
-    if (cachedFromDB) {
-      cachedData = cachedFromDB;
-      console.log('✅ Loaded vocabulary from IndexedDB cache');
-      return cachedData;
-    }
-  }
-
-  // Layer 3: Fetch from public folder
+  // Fetch from public folder
   console.log('🌐 Fetching vocabulary data...');
   const response = await fetch('/OXFORD_3000_ENHANCED_TEMPLATE.json');
   
@@ -49,11 +36,7 @@ export const getVocabularyData = async () => {
     }))
   };
 
-  // Save to IndexedDB for next time
-  if (isIndexedDBSupported()) {
-    await saveToCache(CACHE_KEY, cachedData);
-    console.log('💾 Saved vocabulary to IndexedDB cache');
-  }
+  console.log('✅ Vocabulary data loaded');
 
   return cachedData;
 };

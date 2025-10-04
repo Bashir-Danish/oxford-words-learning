@@ -279,7 +279,7 @@ const PracticeSection = ({ word, onAwardPoints }) => {
       const { points, correctWords, totalWords, percentage } = result;
       
       // Always save attempt, even with 0 points
-      await saveAndShowPoints(sentence, points, correctWords, totalWords, percentage);
+      await saveAndShowPoints(sentence, points, correctWords, totalWords, percentage, false, true);
     } else {
       // Use AI validation for original sentences
       setIsValidatingAI(true);
@@ -297,14 +297,15 @@ const PracticeSection = ({ word, onAwardPoints }) => {
           setAiValidationResult(aiResult);
           
           // Wait for AI result to be set before saving
-          // Always save the attempt, even with 0 points
+          // Save to server but DON'T show success animation yet
           await saveAndShowPoints(
             sentence,
             aiResult.points, // Can be 0
             null, // No word matching for AI validation
             null,
             aiResult.score,
-            true // Mark as AI validated
+            true, // Mark as AI validated
+            true  // Show success animation after save
           );
         } else {
           // Fallback to traditional scoring if AI fails
@@ -313,7 +314,7 @@ const PracticeSection = ({ word, onAwardPoints }) => {
           const { points, correctWords, totalWords, percentage } = result;
           
           // Always save attempt
-          await saveAndShowPoints(sentence, points, correctWords, totalWords, percentage);
+          await saveAndShowPoints(sentence, points, correctWords, totalWords, percentage, false, true);
         }
       } catch (error) {
         console.error('AI validation error:', error);
@@ -322,7 +323,7 @@ const PracticeSection = ({ word, onAwardPoints }) => {
         const { points, correctWords, totalWords, percentage } = result;
         
         // Always save attempt
-        await saveAndShowPoints(sentence, points, correctWords, totalWords, percentage);
+        await saveAndShowPoints(sentence, points, correctWords, totalWords, percentage, false, true);
       } finally {
         // Always turn off loading indicator after everything is done
         setIsValidatingAI(false);
@@ -331,15 +332,8 @@ const PracticeSection = ({ word, onAwardPoints }) => {
   };
 
   // Helper function to save points and show animation
-  const saveAndShowPoints = async (sentence, points, correctWords, totalWords, percentage, aiValidated = false) => {
-    // Always set earned points (even if 0)
-    setEarnedPoints(points);
-    // Only show success animation if points > 0
-    if (points > 0) {
-      setShowPointsAnimation(true);
-    }
-    
-    // Save to server via new practice API
+  const saveAndShowPoints = async (sentence, points, correctWords, totalWords, percentage, aiValidated = false, showAnimation = true) => {
+    // Save to server via new practice API FIRST
     try {
       const response = await practiceAPI.saveWordPractice(word.id, {
         word: word.word,
@@ -361,6 +355,18 @@ const PracticeSection = ({ word, onAwardPoints }) => {
       // Continue anyway - show success to user
     }
     
+    // AFTER saving, set earned points and show animation if requested
+    setEarnedPoints(points);
+    // Only show success animation if points > 0 AND showAnimation is true
+    if (points > 0 && showAnimation) {
+      setShowPointsAnimation(true);
+      
+      // Hide animation after 3 seconds
+      setTimeout(() => {
+        setShowPointsAnimation(false);
+      }, 3000);
+    }
+    
     // Call parent callback (optional - for backward compatibility)
     if (onAwardPoints) {
       onAwardPoints(word.id, points, {
@@ -376,13 +382,6 @@ const PracticeSection = ({ word, onAwardPoints }) => {
     setUserSentence('');
     setShowExample(false);
     setAiValidationResult(null);
-    
-    // Hide animation after 3 seconds (only if points were awarded)
-    if (points > 0) {
-      setTimeout(() => {
-        setShowPointsAnimation(false);
-      }, 3000);
-    }
   };
 
   return (
