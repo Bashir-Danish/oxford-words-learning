@@ -7,7 +7,7 @@ import VocabularyStatistics from './components/VocabularyStatistics';
 import UserLoginSimple from './components/UserLoginSimple';
 import UserProfileSimple from './components/UserProfileSimple';
 import { authAPI, practiceAPI } from './services/api';
-import { BookOpen, Search, BarChart3, AlertTriangle, Check, Target } from 'lucide-react';
+import { BookOpen, Search, BarChart3, AlertTriangle, Check, Target, Wifi, WifiOff } from 'lucide-react';
 
 /**
  * AppNew - Modern Oxford 3000 Vocabulary Learning Application
@@ -49,6 +49,8 @@ function AppNew() {
   
   const {
     loading: vocabularyLoading,
+    loadingMore,
+    loadingPrevious,
     error,
     currentWord,
     currentWordIndex,
@@ -59,9 +61,42 @@ function AppNew() {
     nextWord,
     previousWord,
     statistics,
-    vocabularyData,
-    setVocabularyData
+    loadedWords,
+    setLoadedWords,
+    hasMore,
+    hasPrevious,
+    isOnlineMode,
+    dataSource,
+    dbCounts
   } = useVocabulary(currentUser?.id);
+  
+  // Determine icon color based on data source
+  const getDataSourceColor = () => {
+    switch (dataSource) {
+      case 'server':
+        return 'text-green-600'; // Green for server
+      case 'local':
+      case 'bundled':
+        return 'text-blue-600'; // Blue for local/bundled
+      case 'none':
+      default:
+        return 'text-red-600'; // Red for no data
+    }
+  };
+  
+  const getDataSourceTooltip = () => {
+    switch (dataSource) {
+      case 'server':
+        return 'Data loaded from server';
+      case 'local':
+        return 'Data loaded from local storage';
+      case 'bundled':
+        return 'Data loaded from bundled JSON';
+      case 'none':
+      default:
+        return 'No data loaded';
+    }
+  };
   
   // Manage vocabulary loading with minimum display time
   useEffect(() => {
@@ -115,7 +150,7 @@ function AppNew() {
   }
   
   // Loading state for vocabulary data
-  if (showLoader && (vocabularyLoading || !vocabularyData)) {
+  if (showLoader && (vocabularyLoading || loadedWords.length === 0)) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
         <div className="inline-block animate-spin rounded-full h-16 w-16 border-4 border-blue-500 border-t-transparent"></div>
@@ -138,7 +173,7 @@ function AppNew() {
             <p className="font-semibold">{error}</p>
           </div>
           <div className="bg-gradient-to-r from-amber-50 to-yellow-50 p-5 rounded-xl border-2 border-amber-300">
-            <p className="text-sm text-gray-800 mb-4">Please make sure the <code className="bg-white px-2 py-1 rounded border border-gray-300 font-mono text-xs">OXFORD_3000_ENHANCED_TEMPLATE.json</code> file is in the <code className="bg-white px-2 py-1 rounded border border-gray-300 font-mono text-xs">public</code> folder.</p>
+            <p className="text-sm text-gray-800 mb-4">There was an error loading the vocabulary data. Please try refreshing the page.</p>
             <button onClick={() => window.location.reload()} className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all shadow-md hover:shadow-lg">
               Retry
             </button>
@@ -156,10 +191,24 @@ function AppNew() {
             <div className="flex flex-col sm:flex-row justify-between items-center gap-3">
           <div className="text-center sm:text-left">
             <h1 className="text-xl sm:text-2xl font-bold text-gray-800 flex items-center justify-center sm:justify-start gap-2">
-              <BookOpen className="w-5 h-5 text-indigo-600" />
-              <span>Oxford {statistics.totalWords}</span>
+              <BookOpen 
+                className={`w-5 h-5 ${getDataSourceColor()} transition-colors duration-300`}
+                title={getDataSourceTooltip()}
+              />
+              <span>Oxford {dbCounts.totalWords || statistics.totalWords}</span>
             </h1>
-            <p className="text-gray-600 text-xs sm:text-sm">Master Essential English Vocabulary</p>
+            <p className="text-gray-600 text-xs sm:text-sm flex items-center justify-center sm:justify-start gap-2">
+              <span>Master Essential English Vocabulary</span>
+              {/* <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{
+                backgroundColor: dataSource === 'server' ? '#10b981' : dataSource === 'local' || dataSource === 'bundled' ? '#3b82f6' : '#ef4444',
+                color: 'white'
+              }}>
+                {dataSource === 'server' && '🟢 Server'}
+                {dataSource === 'local' && '🔵 Local'}
+                {dataSource === 'bundled' && '🔵 Bundled'}
+                {dataSource === 'none' && '🔴 No Data'}
+              </span> */}
+            </p>
           </div>
           <div className="flex flex-wrap justify-center sm:justify-end items-center gap-2">
             <UserProfileSimple
@@ -240,6 +289,11 @@ function AppNew() {
               onPrevious={previousWord}
               currentIndex={currentWordIndex}
               totalWords={filteredVocabulary.length}
+              loadingMore={loadingMore}
+              loadingPrevious={loadingPrevious}
+              hasMore={hasMore}
+              hasPrevious={hasPrevious}
+              totalDatabaseWords={dbCounts.totalWords}
             />
 
             {/* Practice Section */}

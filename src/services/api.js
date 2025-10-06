@@ -238,6 +238,74 @@ export const practiceAPI = {
   },
 };
 
+// ============ Vocabulary APIs ============
+
+export const vocabularyAPI = {
+  /**
+   * Get vocabulary words with pagination
+   * @param {Object} params - { startFrom, limit, level, difficulty }
+   * @returns {Promise<Object>} Vocabulary words with pagination info
+   */
+  getWords: async (params = {}) => {
+    const { startFrom = 1, limit = 50, level, difficulty } = params;
+    const queryParams = new URLSearchParams({
+      startFrom: startFrom.toString(),
+      limit: limit.toString(),
+    });
+    
+    if (level && level !== 'all') {
+      queryParams.append('level', level);
+    }
+    
+    if (difficulty && difficulty !== 'all') {
+      queryParams.append('difficulty', difficulty);
+    }
+    
+    return await apiRequest(`/vocabulary/words?${queryParams.toString()}`);
+  },
+
+  /**
+   * Find the first unlearned word for current user
+   * @param {string} level - Optional level filter
+   * @returns {Promise<Object>} First unlearned word info
+   */
+  getFirstUnlearned: async (level) => {
+    const queryParams = new URLSearchParams();
+    if (level && level !== 'all') {
+      queryParams.append('level', level);
+    }
+    return await apiRequest(`/vocabulary/first-unlearned?${queryParams.toString()}`);
+  },
+
+  /**
+   * Get total vocabulary and learned counts
+   * @returns {Promise<Object>} Total and learned counts
+   */
+  getCounts: async () => {
+    return await apiRequest('/vocabulary/counts');
+  },
+
+  /**
+   * Get vocabulary statistics
+   * @returns {Promise<Object>} Vocabulary statistics
+   */
+  getStats: async () => {
+    return await apiRequest('/vocabulary/stats');
+  },
+
+  /**
+   * Check learned status for batch of word IDs
+   * @param {Array<number>} wordIds - Array of word IDs
+   * @returns {Promise<Object>} Learned word IDs
+   */
+  batchCheck: async (wordIds) => {
+    return await apiRequest('/vocabulary/batch-check', {
+      method: 'POST',
+      body: JSON.stringify({ wordIds }),
+    });
+  },
+};
+
 // ============ Learned Words APIs ============
 
 export const learnedWordsAPI = {
@@ -297,6 +365,7 @@ export const learnedWordsAPI = {
 export default {
   auth: authAPI,
   user: userAPI,
+  vocabulary: vocabularyAPI,
   practice: practiceAPI,
   learnedWords: learnedWordsAPI,
   isAuthenticated,

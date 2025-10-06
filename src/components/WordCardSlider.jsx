@@ -14,6 +14,7 @@ import {
   ArrowLeft,
   ArrowRight
 } from 'lucide-react';
+import SpeakerButton from './SpeakerButton';
 
 /**
  * WordCardSlider - Modern compact card component with slider and flip animation
@@ -24,7 +25,12 @@ const WordCardSlider = ({
   onNext, 
   onPrevious, 
   currentIndex, 
-  totalWords 
+  totalWords,
+  loadingMore,
+  loadingPrevious,
+  hasMore,
+  hasPrevious,
+  totalDatabaseWords
 }) => {
   const [isFlipped, setIsFlipped] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
@@ -103,8 +109,8 @@ const WordCardSlider = ({
       {/* Details Button at the very top */}
       <div className="flex justify-between items-center mb-3">
         <div className="flex justify-between text-xs text-gray-600">
-          <span>Word {currentIndex + 1} of {totalWords}</span>
-          <span className="ml-2">{Math.round(((currentIndex + 1) / totalWords) * 100)}%</span>
+          <span>Word {word?.wordId || currentIndex + 1} of {totalDatabaseWords || totalWords}</span>
+          <span className="ml-2">{totalDatabaseWords ? Math.round((word?.wordId / totalDatabaseWords) * 100) : Math.round(((currentIndex + 1) / totalWords) * 100)}%</span>
         </div>
         <button
           onClick={() => setShowDetails(!showDetails)}
@@ -120,7 +126,7 @@ const WordCardSlider = ({
         <div className="w-full bg-gray-200 rounded-full h-1.5">
           <div 
             className="bg-gradient-to-r from-blue-500 to-indigo-600 h-1.5 rounded-full transition-all duration-300"
-            style={{ width: `${((currentIndex + 1) / totalWords) * 100}%` }}
+            style={{ width: `${totalDatabaseWords ? (word?.wordId / totalDatabaseWords) * 100 : ((currentIndex + 1) / totalWords) * 100}%` }}
           ></div>
         </div>
       </div>
@@ -232,9 +238,16 @@ const WordCardSlider = ({
 
             {/* Word - Large and centered */}
             <div className="text-center mb-4">
-              <h2 className="text-4xl sm:text-5xl font-bold text-gray-800 mb-2">
-                {word.word.charAt(0).toUpperCase() + word.word.slice(1)}
-              </h2>
+              <div className="flex items-center justify-center gap-3 mb-2">
+                <h2 className="text-4xl sm:text-5xl font-bold text-gray-800">
+                  {word.word.charAt(0).toUpperCase() + word.word.slice(1)}
+                </h2>
+                <SpeakerButton 
+                  text={word.word} 
+                  size="md" 
+                  variant="tertiary"
+                />
+              </div>
               {word.phonetic && (
                 <p className="text-gray-500 text-base">{word.phonetic}</p>
               )}
@@ -263,7 +276,7 @@ const WordCardSlider = ({
             {/* Word Number */}
             <div className="text-center mb-4">
               <span className="inline-block bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium">
-                #{currentIndex + 1}
+                {word.wordId}
               </span>
             </div>
 
@@ -307,9 +320,15 @@ const WordCardSlider = ({
           >
             <div className="h-full flex flex-col">
               {/* Word Title */}
-              
-              <h3 className="text-2xl sm:text-3xl font-bold mb-1 text-center">{word.word}</h3>
-              <p className="text-xs text-center mb-2  font-medium">{word.persian}</p>
+              <div className="flex items-center justify-center gap-2 mb-1">
+                <h3 className="text-2xl sm:text-3xl font-bold text-center">{word.word}</h3>
+                <SpeakerButton 
+                  text={word.word} 
+                  size="md" 
+                  variant="secondary"
+                />
+              </div>
+              <p className="text-xs text-center mb-2 font-medium">{word.persian}</p>
               
               
               {/* Main Content */}
@@ -323,7 +342,16 @@ const WordCardSlider = ({
                 {/* Example */}
                 {word.example && (
                   <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3">
-                    <p className="font-semibold mb-2 text-sm flex items-center gap-1"><MessageSquare className="w-4 h-4" /> Example:</p>
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <p className="font-semibold text-sm flex items-center gap-1">
+                        <MessageSquare className="w-4 h-4" /> Example:
+                      </p>
+                      <SpeakerButton 
+                        text={word.example} 
+                        size="sm" 
+                        variant="minimal"
+                      />
+                    </div>
                     <p className="text-sm leading-relaxed italic">"{word.example}"</p>
                   </div>
                 )}
@@ -416,15 +444,35 @@ const WordCardSlider = ({
         </button>
       </div>
 
-      {/* Flip Card Button */}
-      {/* <div className="flex gap-2">
-        <button
-          onClick={handleFlip}
-          className="flex-1 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-semibold transition-colors shadow-md"
-        >
-          {isFlipped ? 'Flip to Word' : 'Flip to Definition'}
-        </button>
-      </div> */}
+      {/* Loading Previous Indicator */}
+      {loadingPrevious && (
+        <div className="text-center py-2">
+          <div className="inline-flex items-center gap-2 text-sm text-purple-600">
+            <div className="animate-spin rounded-full h-4 w-4 border-2 border-purple-600 border-t-transparent"></div>
+            <span>Loading previous words...</span>
+          </div>
+        </div>
+      )}
+      
+      {/* Loading More Indicator */}
+      {loadingMore && (
+        <div className="text-center py-2">
+          <div className="inline-flex items-center gap-2 text-sm text-blue-600">
+            <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>
+            <span>Loading more words...</span>
+          </div>
+        </div>
+      )}
+      
+      {/* End of vocabulary indicator */}
+      {!hasMore && totalWords > 0 && (
+        <div className="text-center py-2">
+          <div className="inline-flex items-center gap-2 text-sm text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
+            <Check className="w-4 h-4" />
+            <span>You've reached the end of loaded vocabulary</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
