@@ -274,7 +274,7 @@ const WordCardSlider = ({
       <div className="perspective-1200 mb-3 relative">
         {/* Details Overlay - Appears on top of front card */}
         {showDetails && !isFlipped && (
-          <div className="absolute inset-0 bg-white rounded-lg shadow-2xl p-4 z-20 overflow-y-auto animate-slideDown border-2 border-violet-500">
+          <div className="absolute inset-0 bg-white rounded-lg shadow-2xl p-4 z-20 overflow-y-auto animate-slideDown border-1 border-violet-500">
             <div className="space-y-3">
               <div className="flex justify-between items-center mb-3 border-b-2 border-violet-500 pb-2">
                 <h4 className="text-base font-bold text-gray-800 flex items-center gap-2">

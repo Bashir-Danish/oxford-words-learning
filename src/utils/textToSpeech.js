@@ -1,6 +1,6 @@
 /**
- * Text-to-Speech Utility using Web Speech API
- * No external packages needed - built into modern browsers!
+ * Text-to-Speech Utility with improved pronunciation
+ * Uses enhanced Web Speech API with better voice selection
  */
 
 class TextToSpeech {
@@ -16,12 +16,65 @@ class TextToSpeech {
     this.voices = [];
     this.isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     this.isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    this.currentUtterance = null;
     this.loadVoices();
     
     // Load voices when they change (some browsers load them async)
     if (this.synth.onvoiceschanged !== undefined) {
       this.synth.onvoiceschanged = () => this.loadVoices();
     }
+  }
+
+  loadVoices() {
+    if (!this.synth) return;
+    this.voices = this.synth.getVoices();
+  }
+
+  /**
+   * Get the best English voice available
+   * Prefers high-quality voices with better pronunciation
+   */
+  getEnglishVoice() {
+    if (!this.voices || this.voices.length === 0) {
+      this.loadVoices();
+    }
+
+    // Priority list of high-quality voices
+    const preferredVoices = [
+      'Google UK English Female',
+      'Google UK English Male',
+      'Google US English',
+      'Microsoft Zira - English (United States)',
+      'Microsoft David - English (United States)',
+      'Alex',  // macOS
+      'Samantha',  // macOS
+      'Karen',  // macOS
+      'Daniel',  // macOS
+    ];
+
+    // Try to find preferred voices first
+    for (const prefName of preferredVoices) {
+      const voice = this.voices.find(v => v.name.includes(prefName));
+      if (voice) return voice;
+    }
+
+    // Try to find any high-quality English voice
+    const highQualityVoice = this.voices.find(v => 
+      (v.lang === 'en-GB' || v.lang === 'en-US') && 
+      (v.name.toLowerCase().includes('google') || 
+       v.name.toLowerCase().includes('microsoft') ||
+       v.localService === false)  // Network voices are usually better quality
+    );
+    
+    if (highQualityVoice) return highQualityVoice;
+
+    // Fallback to any English voice
+    let voice = this.voices.find(v => v.lang === 'en-GB') ||
+                this.voices.find(v => v.lang === 'en-US') ||
+                this.voices.find(v => v.lang.startsWith('en-'));
+    
+    // Last resort: use the first available voice
+    return voice || this.voices[0];
   }
 
   /**
@@ -34,36 +87,36 @@ class TextToSpeech {
     
     const abbreviations = {
       // Parts of speech
-      '(n)': 'noun',
-      '(v)': 'verb',
-      '(adj)': 'adjective',
-      '(adv)': 'adverb',
-      '(prep)': 'preposition',
-      '(pron)': 'pronoun',
-      '(conj)': 'conjunction',
-      '(interj)': 'interjection',
-      '(det)': 'determiner',
-      '(aux)': 'auxiliary verb',
-      '(modal)': 'modal verb',
+      '(n)': ' noun',
+      '(v)': ' verb',
+      '(adj)': ' adjective',
+      '(adv)': ' adverb',
+      '(prep)': ' preposition',
+      '(pron)': ' pronoun',
+      '(conj)': ' conjunction',
+      '(interj)': ' interjection',
+      '(det)': ' determiner',
+      '(aux)': ' auxiliary verb',
+      '(modal)': ' modal verb',
       
       // Common patterns
-      '(sb)': 'somebody',
-      '(sth)': 'something',
-      '(pl)': 'plural',
-      '(sing)': 'singular',
-      '(C)': 'countable',
-      '(U)': 'uncountable',
-      '(T)': 'transitive',
-      '(I)': 'intransitive',
+      '(sb)': ' somebody',
+      '(sth)': ' something',
+      '(pl)': ' plural',
+      '(sing)': ' singular',
+      '(C)': ' countable',
+      '(U)': ' uncountable',
+      '(T)': ' transitive',
+      '(I)': ' intransitive',
       
       // Common word notations
-      'sb.': 'somebody',
-      'sth.': 'something',
-      'e.g.': 'for example',
-      'i.e.': 'that is',
-      'etc.': 'etcetera',
-      'vs.': 'versus',
-      'approx.': 'approximately',
+      'sb.': ' somebody',
+      'sth.': ' something',
+      'e.g.': ' for example',
+      'i.e.': ' that is',
+      'etc.': ' etcetera',
+      'vs.': ' versus',
+      'approx.': ' approximately',
     };
     
     let expandedText = text;
@@ -78,25 +131,6 @@ class TextToSpeech {
     return expandedText;
   }
 
-  loadVoices() {
-    if (!this.synth) return;
-    this.voices = this.synth.getVoices();
-  }
-
-  /**
-   * Get the best English voice available
-   * Prefers US or UK English voices
-   */
-  getEnglishVoice() {
-    // Try to find specific English voices (US or UK)
-    let voice = this.voices.find(v => v.lang === 'en-US') ||
-                this.voices.find(v => v.lang === 'en-GB') ||
-                this.voices.find(v => v.lang.startsWith('en-'));
-    
-    // Fallback to any voice
-    return voice || this.voices[0];
-  }
-
   /**
    * Speak a word or sentence
    * @param {string} text - Text to speak
@@ -106,39 +140,51 @@ class TextToSpeech {
     // Check if speech synthesis is available
     if (!this.synth || !text) return;
     
-    // Cancel any ongoing speech
+    // Cancel any ongoing speech first
     this.synth.cancel();
     
-    // iOS Safari fix: Resume synthesis (it sometimes gets paused)
-    if (this.synth.paused) {
-      this.synth.resume();
-    }
+    // Small delay to ensure cancel completes (helps with some browsers)
+    setTimeout(() => {
+      // iOS Safari fix: Resume synthesis (it sometimes gets paused)
+      if (this.synth.paused) {
+        this.synth.resume();
+      }
 
-    // Expand abbreviations for better pronunciation
-    const expandedText = this.expandAbbreviations(text);
+      // Expand abbreviations for better pronunciation
+      const expandedText = this.expandAbbreviations(text);
 
-    const utterance = new SpeechSynthesisUtterance(expandedText);
-    
-    // Set voice
-    const voice = this.getEnglishVoice();
-    if (voice) {
-      utterance.voice = voice;
-    }
+      const utterance = new SpeechSynthesisUtterance(expandedText);
+      this.currentUtterance = utterance;
+      
+      // Set voice - Try to get it fresh each time for reliability
+      this.loadVoices();
+      const voice = this.getEnglishVoice();
+      if (voice) {
+        utterance.voice = voice;
+        console.log('Using voice:', voice.name, '- Lang:', voice.lang);
+      }
 
-    // Set options with defaults
-    // Mobile devices (especially Android) work better with slightly different rates
-    const defaultRate = this.isMobile ? 0.85 : 0.9;
-    utterance.rate = options.rate || defaultRate; // Slightly slower for learning
-    utterance.pitch = options.pitch || 1;
-    utterance.volume = options.volume || 1;
-    utterance.lang = options.lang || 'en-US';
+      // Set options with defaults optimized for learning
+      // Slower rate for better comprehension
+      const defaultRate = this.isMobile ? 0.8 : 0.85;
+      utterance.rate = options.rate || defaultRate;
+      utterance.pitch = options.pitch || 1;
+      utterance.volume = options.volume || 1;
+      utterance.lang = options.lang || 'en-GB';  // UK English for better pronunciation
 
-    // Callbacks
-    if (options.onStart) utterance.onstart = options.onStart;
-    if (options.onEnd) utterance.onend = options.onEnd;
-    if (options.onError) utterance.onerror = options.onError;
+      // Callbacks
+      if (options.onStart) utterance.onstart = options.onStart;
+      if (options.onEnd) utterance.onend = options.onEnd;
+      if (options.onError) {
+        utterance.onerror = (event) => {
+          console.error('Speech error:', event);
+          options.onError(event);
+        };
+      }
 
-    this.synth.speak(utterance);
+      // Speak the text
+      this.synth.speak(utterance);
+    }, 50);
   }
 
   /**
