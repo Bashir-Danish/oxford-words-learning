@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
-import { PencilLine, Star, Lightbulb, Check, Eye, EyeOff, Trash2, BookOpen, Pencil, Sparkles } from 'lucide-react';
+import { PencilLine, Star, Lightbulb, Check, Eye, EyeOff, Trash2, BookOpen, Pencil, Sparkles, MessageCircle, X, Send, Bot } from 'lucide-react';
 import { practiceAPI } from '../services/api';
-import { validateSentenceWithAI, checkSentenceSimilarity, getAIQualityFeedback } from '../services/aiValidation';
+import { validateSentenceWithAI, checkSentenceSimilarity, getAIQualityFeedback, explainWordWithAI } from '../services/aiValidation';
 
 /**
  * PracticeSection - Interactive practice area for writing example sentences
@@ -19,9 +19,17 @@ const PracticeSection = ({ word, onAwardPoints }) => {
   const [isValidatingAI, setIsValidatingAI] = useState(false);
   const [aiValidationResult, setAiValidationResult] = useState(null);
   
+  // Chat state
+  const [showChat, setShowChat] = useState(false);
+  const [chatMessages, setChatMessages] = useState([]);
+  const [isLoadingChat, setIsLoadingChat] = useState(false);
+  const [customQuestion, setCustomQuestion] = useState('');
+  const [hasRequestedExplanation, setHasRequestedExplanation] = useState(false);
+  
   // Refs
   const textareaRef = useRef(null);
   const practiceSectionRef = useRef(null);
+  const chatEndRef = useRef(null);
 
   // Reset when word changes and load previous practice data
   useEffect(() => {
@@ -32,6 +40,10 @@ const PracticeSection = ({ word, onAwardPoints }) => {
     setShowPointsAnimation(false);
     setAiValidationResult(null);
     setIsValidatingAI(false);
+    setShowChat(false);
+    setChatMessages([]);
+    setCustomQuestion('');
+    setHasRequestedExplanation(false);
     
     // Load previous practice data for this word
     const loadPreviousPractice = async () => {
@@ -55,15 +67,283 @@ const PracticeSection = ({ word, onAwardPoints }) => {
     
     loadPreviousPractice();
   }, [word?.id]);
+  
+  // Auto-scroll chat to bottom when new messages arrive
+  useEffect(() => {
+    if (showChat && chatEndRef.current) {
+      setTimeout(() => {
+        chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+    }
+  }, [chatMessages, showChat]);
+  
+  // Handle custom question from user
+  const handleCustomQuestion = async () => {
+    const question = customQuestion.trim();
+    if (!question) return;
+    
+    // Add user message to chat
+    setChatMessages(prev => [
+      ...prev,
+      {
+        type: 'user',
+        content: question,
+        timestamp: new Date()
+      }
+    ]);
+    
+    // Clear input
+    setCustomQuestion('');
+    setIsLoadingChat(true);
+    
+    try {
+      // Create prompt with word context
+      const prompt = `You are a helpful English-Persian language tutor. The student is learning the word "${word.word}" which means "${word.definition || word.meaning}".
+
+Student's question: ${question}
+
+Provide a clear, helpful answer in both English and Persian (Farsi). Keep your response concise but complete. Use proper Persian script.`;
+      
+      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${import.meta.env.VITE_OPENROUTER_API_KEY || "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"}`,
+          'HTTP-Referer': window.location.origin,
+          'X-Title': 'Oxford Word Learning App',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: 'deepseek/deepseek-chat-v3.1:free',
+          messages: [
+            { role: 'user', content: prompt }
+          ],
+          temperature: 0.7,
+          max_tokens: 500
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to get AI response');
+      }
+      
+      const data = await response.json();
+      const aiResponse = data.choices?.[0]?.message?.content;
+      
+      if (aiResponse) {
+        const cleanedResponse = cleanAIResponse(aiResponse);
+        setChatMessages(prev => [
+          ...prev,
+          {
+            type: 'ai',
+            content: cleanedResponse,
+            timestamp: new Date()
+          }
+        ]);
+      }
+    } catch (error) {
+      console.error('Failed to get answer:', error);
+      setChatMessages(prev => [
+        ...prev,
+        {
+          type: 'ai',
+          content: 'Sorry, I couldn\'t process your question. Please try again.\nمتأسفم، نتوانستم سوال شما را پردازش کنم. لطفاً دوباره امتحان کنید.',
+          timestamp: new Date()
+        }
+      ]);
+    } finally {
+      setIsLoadingChat(false);
+    }
+  };
+  
+  // Clean AI response - remove intro phrases
+  const cleanAIResponse = (response) => {
+    if (!response) return response;
+    
+    // Remove common intro phrases
+    const introPhrases = [
+      /^Of course!?\s*/i,
+      /^Sure!?\s*/i,
+      /^Here is.*?explanation.*?[:\.]\s*/i,
+      /^Here's.*?explanation.*?[:\.]\s*/i,
+      /^Let me.*?explain.*?[:\.]\s*/i,
+      /^I'll.*?explain.*?[:\.]\s*/i,
+      /^Certainly!?\s*/i,
+      /^Absolutely!?\s*/i,
+    ];
+    
+    let cleaned = response.trim();
+    
+    for (const phrase of introPhrases) {
+      cleaned = cleaned.replace(phrase, '');
+    }
+    
+    // Remove any remaining leading newlines or spaces
+    cleaned = cleaned.trim();
+    
+    return cleaned;
+  };
+  
+  // Handle Ask button click - send word data for explanation
+  const handleAskForHelp = async () => {
+    // If chat is already showing, don't do anything
+    if (showChat) {
+      return;
+    }
+    
+    // Show chat
+    setShowChat(true);
+    
+    // If explanation already requested for this word, just show the existing chat
+    if (hasRequestedExplanation) {
+      return;
+    }
+    
+    // Mark as requested and start loading
+    setHasRequestedExplanation(true);
+    setIsLoadingChat(true);
+    
+    // Helper to check if value is valid (not empty, N/A, or ندارد)
+    const isValidValue = (value) => {
+      if (!value) return false;
+      if (value === 'N/A' || value === 'ندارد') return false;
+      if (Array.isArray(value)) {
+        return value.length > 0 && value[0] !== 'N/A' && value[0] !== 'ندارد';
+      }
+      return true;
+    };
+    
+    // Prepare word data for AI explanation - only include fields with valid data
+    const wordData = {
+      word: word.word // Always include the word itself
+    };
+    
+    // Only add fields that have valid data
+    if (isValidValue(word.definition)) {
+      wordData.definition = word.definition;
+    }
+    
+    if (isValidValue(word.meaning)) {
+      wordData.meaning = word.meaning;
+    }
+    
+    if (isValidValue(word.wordFamily)) {
+      wordData.wordFamily = word.wordFamily;
+    }
+    
+    if (isValidValue(word.persianMeaning)) {
+      wordData.persianMeaning = word.persianMeaning;
+    }
+    
+    if (isValidValue(word.synonyms)) {
+      wordData.synonyms = word.synonyms;
+    }
+    
+    if (isValidValue(word.antonyms)) {
+      wordData.antonyms = word.antonyms;
+    }
+    
+    if (isValidValue(word.example)) {
+      wordData.example = word.example;
+    }
+    
+    if (isValidValue(word.practiceExample) && word.practiceExample !== word.example) {
+      wordData.practiceExample = word.practiceExample;
+    }
+    
+    try {
+      // Use AI service to get explanation with Persian translations
+      const result = await explainWordWithAI(wordData);
+      
+      if (result.success && result.explanation) {
+        // Clean and add AI response to chat
+        const cleanedExplanation = cleanAIResponse(result.explanation);
+        setChatMessages(prev => [
+          ...prev,
+          {
+            type: 'ai',
+            content: cleanedExplanation,
+            timestamp: new Date()
+          }
+        ]);
+      } else {
+        // Fallback explanation if AI fails
+        const fallbackExplanation = generateFallbackExplanation(wordData);
+        setChatMessages(prev => [
+          ...prev,
+          {
+            type: 'ai',
+            content: fallbackExplanation,
+            timestamp: new Date()
+          }
+        ]);
+      }
+    } catch (error) {
+      console.error('Failed to get AI explanation:', error);
+      // Show fallback explanation
+      const fallbackExplanation = generateFallbackExplanation(wordData);
+      setChatMessages(prev => [
+        ...prev,
+        {
+          type: 'ai',
+          content: fallbackExplanation,
+          timestamp: new Date()
+        }
+      ]);
+    } finally {
+      setIsLoadingChat(false);
+    }
+  };
+  
+  // Generate fallback explanation from word data (when AI fails)
+  const generateFallbackExplanation = (wordData) => {
+    let explanation = `📚 **Word: ${wordData.word}**\nکلمه: ${wordData.word}\n\n`;
+    
+    // Only include sections with actual data (skip N/A)
+    if (wordData.definition && wordData.definition !== 'N/A') {
+      explanation += `**Definition (تعریف):**\n${wordData.definition}\n\n`;
+    }
+    
+    if (wordData.meaning && wordData.meaning !== 'N/A') {
+      explanation += `**Meaning (معنی):**\n${wordData.meaning}\n\n`;
+    }
+    
+    if (wordData.persianMeaning && wordData.persianMeaning !== 'N/A' && wordData.persianMeaning !== 'ندارد') {
+      explanation += `**معنی فارسی:**\n${wordData.persianMeaning}\n\n`;
+    }
+    
+    if (wordData.wordFamily && wordData.wordFamily !== 'N/A') {
+      explanation += `**Word Family (خانواده کلمه):**\n${wordData.wordFamily}\n\n`;
+    }
+    
+    if (wordData.synonyms && wordData.synonyms.length > 0 && wordData.synonyms[0] !== 'N/A') {
+      explanation += `**Synonyms (مترادف):**\n${wordData.synonyms.join(', ')}\n\n`;
+    }
+    
+    if (wordData.antonyms && wordData.antonyms.length > 0 && wordData.antonyms[0] !== 'N/A') {
+      explanation += `**Antonyms (متضاد):**\n${wordData.antonyms.join(', ')}\n\n`;
+    }
+    
+    if (wordData.example && wordData.example !== 'N/A') {
+      explanation += `**Example (مثال):**\n"${wordData.example}"\n\n`;
+    }
+    
+    if (wordData.practiceExample && wordData.practiceExample !== 'N/A' && wordData.practiceExample !== wordData.example) {
+      explanation += `**Practice Example (مثال تمرینی):**\n"${wordData.practiceExample}"\n\n`;
+    }
+    
+    explanation += `\n💡 **Tip (نکته):**\nTry using this word in your own sentence to practice!\nبرای تمرین سعی کنید از این کلمه در جمله خود استفاده کنید!`;
+    
+    return explanation;
+  };
 
   // Add keyboard shortcuts
   // - SHIFT key: Toggle hints ON/OFF
-  // - SPACE key: Focus textarea (if not already focused)
-  // - CTRL key: Scroll practice section to top
+  // - CTRL key: Scroll to practice section and focus textarea
   useEffect(() => {
     const handleKeyDown = (e) => {
       // CTRL key: Scroll to practice section and focus textarea
-      if (e.key === 'Control' && !e.repeat) {
+      // Only trigger if CTRL is pressed alone (not with other modifiers)
+      if (e.key === 'Control' && !e.repeat && !e.shiftKey && !e.altKey && !e.metaKey) {
         e.preventDefault();
         if (practiceSectionRef.current) {
           // Smooth scroll to practice section
@@ -81,24 +361,10 @@ const PracticeSection = ({ word, onAwardPoints }) => {
       }
       
       // SHIFT key: Toggle hints
-      if (e.key === 'Shift' && !e.repeat) {
+      if (e.key === 'Shift' && !e.repeat && !e.ctrlKey && !e.altKey && !e.metaKey) {
         e.preventDefault();
         setShowSuggestions(prev => !prev);
       }
-      
-      // SPACE key: Focus textarea if not already focused
-      if (e.code === 'Space' && e.target.tagName !== 'TEXTAREA') {
-        e.preventDefault();
-        // Focus the textarea using ref
-        if (textareaRef.current) {
-          textareaRef.current.focus();
-          // Add a space at the end if there's existing text
-          if (userSentence) {
-            setUserSentence(prev => prev + ' ');
-          }
-        }
-      }
-      // If SPACE is pressed in textarea, let it work normally (no preventDefault)
     };
 
     window.addEventListener('keydown', handleKeyDown);
@@ -485,7 +751,9 @@ const PracticeSection = ({ word, onAwardPoints }) => {
           <p className="text-xs sm:text-sm text-gray-700 mb-1">
             Write a sentence using the word <span className="font-bold text-blue-700">"{word.word}"</span>:
           </p>
-          
+          <p className="text-[10px] text-gray-500 mt-1">
+            ⌨️ Shortcuts: <span className="font-semibold">CTRL</span> - Focus here • <span className="font-semibold">SHIFT</span> - Toggle hints
+          </p>
         </div>
 
         {/* Textarea */}
@@ -587,57 +855,76 @@ const PracticeSection = ({ word, onAwardPoints }) => {
         )}
 
         {/* Word Count & Quality Feedback */}
-        <div className="flex flex-wrap justify-between items-center gap-2 mb-3">
-          <span className="text-xs text-gray-600">
-            {userWords.filter(w => w.trim()).length} words
-            {wordIsUsedInSentence && <span className="ml-2 text-green-600 font-semibold inline-flex items-center gap-1"><Check className="w-3.5 h-3.5" /> Word used!</span>}
-          </span>
-          
-          {!aiValidationResult && quality && (
-            <div className={`text-xs px-3 py-2 rounded-lg font-medium shadow-sm ${
-              quality.type === 'success' ? 'bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 border border-green-300' :
-              quality.type === 'warning' ? 'bg-gradient-to-r from-yellow-100 to-amber-100 text-yellow-800 border border-yellow-300' :
-              'bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-800 border border-blue-300'
-            }`}>
-              {quality.message}
-            </div>
-          )}
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex flex-wrap gap-2 mb-3">
-          <button
-            onClick={handleSubmitSentence}
-            disabled={!wordIsUsedInSentence || userSentence.trim().length === 0 || isValidatingAI}
-            className="flex-1 min-w-[120px]  sm:px-4 px-2 sm:py-2 py-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded-lg  font-semibold transition-colors flex items-center justify-center gap-1"
-          >
-            {isValidatingAI ? (
-              <>
-                <Sparkles className="w-4 h-4 animate-spin" />
-                <span>Validating...</span>
-              </>
-            ) : (
-              <>
-                <Check className="sm:w-4 sm:h-4 h-2 w-2" />
-                <span className='text-[12px] sm:text-xs'>Submit & Get Points</span>
-              </>
+          <div className="flex flex-wrap justify-between items-center gap-2 mb-3">
+            <span className="text-xs text-gray-600">
+              {userWords.filter(w => w.trim()).length} words
+              {wordIsUsedInSentence && <span className="ml-2 text-green-600 font-semibold inline-flex items-center gap-1"><Check className="w-3.5 h-3.5" /> Word used!</span>}
+            </span>
+            
+            {!aiValidationResult && quality && (
+              <div className={`text-xs px-3 py-2 rounded-lg font-medium shadow-sm ${
+                quality.type === 'success' ? 'bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 border border-green-300' :
+                quality.type === 'warning' ? 'bg-gradient-to-r from-yellow-100 to-amber-100 text-yellow-800 border border-yellow-300' :
+                'bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-800 border border-blue-300'
+              }`}>
+                {quality.message}
+              </div>
             )}
-          </button>
-          <button
-            onClick={() => setShowExample(!showExample)}
-            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-[12px] sm:text-xs font-semibold transition-colors inline-flex items-center gap-1"
-          >
-            {showExample ? (<><EyeOff className="w-4 h-4" /> Hide</>) : (<><Eye className="w-4 h-4" /> Example</>)}
-          </button>
-          <button
-            onClick={handleClearSentence}
-            className="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-lg text-[12px] sm:text-xs font-semibold transition-colors inline-flex items-center gap-1"
-          >
-            <Trash2 className="w-4 h-4" /> Clear
-          </button>
-        </div>
+          </div>
 
-        {/* Example Sentence Display */}
+          {/* Action Buttons (compact) */}
+          <div className="flex flex-wrap gap-1 mb-3 items-center justify-self-auto">
+            <button
+              onClick={handleSubmitSentence}
+              disabled={!wordIsUsedInSentence || userSentence.trim().length === 0 || isValidatingAI}
+              className="flex-none px-3 py-1 min-w-[110px] bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded-md font-semibold text-[12px] transition-colors inline-flex items-center justify-center gap-2"
+            >
+              {isValidatingAI ? (
+                <>
+            <Sparkles className="w-4 h-4 animate-spin" />
+            <span className="text-[12px]">Checking...</span>
+                </>
+              ) : (
+                <>
+            <Check className="w-4 h-4" />
+            <span className='text-[12px]'>Submit (+pts)</span>
+                </>
+              )}
+            </button>
+
+            {/* Ask AI button (small) */}
+            <button
+              onClick={handleAskForHelp}
+              className={`px-2 py-1 rounded-md text-[11px] font-semibold inline-flex items-center gap-1 transition-all shadow-sm ${
+                showChat
+                  ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white cursor-default'
+                  : 'bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white'
+              }`}
+              title={showChat ? 'AI Chat is open below' : 'Ask AI for help and translation'}
+            >
+              <Sparkles className={`w-4 h-4 ${
+                showChat ? 'animate-pulse' : ''
+              }`} /> Ask AI {showChat && '✓'}
+            </button>
+
+            <button
+              onClick={() => setShowExample(!showExample)}
+              className="px-2 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md text-[11px] font-semibold transition-colors inline-flex items-center gap-1"
+              title={showExample ? 'Hide example' : 'Show example'}
+            >
+              {showExample ? (<><EyeOff className="w-4 h-4" /> Hide</>) : (<><Eye className="w-4 h-4" /> Example</>)}
+            </button>
+
+            <button
+              onClick={handleClearSentence}
+              className="px-2 py-1 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-md text-[11px] font-semibold transition-colors inline-flex items-center gap-1"
+              title="Clear sentence"
+            >
+              <Trash2 className="w-4 h-4" /> Clear
+            </button>
+          </div>
+
+          {/* Example Sentence Display */}
         {showExample && practiceExample && (
           <div className="bg-white rounded-lg p-4 border-l-4 border-green-500 animate-slideDown">
             <p className="text-xs font-semibold text-green-900 mb-2 flex items-center gap-1"><BookOpen className="w-4 h-4" /> Practice Example from Oxford:</p>
@@ -687,7 +974,7 @@ const PracticeSection = ({ word, onAwardPoints }) => {
         )}
 
         {/* Tips & Scoring Guide */}
-        <div className="mt-3 bg-gradient-to-r from-amber-50 to-yellow-50 rounded-lg p-3 border-2 border-amber-300">
+        {/* <div className="mt-3 bg-gradient-to-r from-amber-50 to-yellow-50 rounded-lg p-3 border-2 border-amber-300">
           <p className="text-xs font-semibold text-amber-900 mb-2 flex items-center gap-1">
             <Star className="w-4 h-4" />
             Scoring System:
@@ -699,7 +986,202 @@ const PracticeSection = ({ word, onAwardPoints }) => {
             <li>• Proper grammar (capitalize & punctuate): <span className="font-bold text-indigo-700">+3 bonus points</span></li>
             <li>• <span className="font-bold text-purple-700">Tip:</span> Be creative! Original sentences get AI validation</li>
           </ul>
-        </div>
+        </div> */}
+        
+        {/* Chat Section */}
+        {showChat && (
+          <div className="mt-3 bg-white rounded-lg border-2 border-purple-400 shadow-xl animate-slideDown">
+            {/* Chat Header */}
+            <div className="bg-gradient-to-r from-purple-500 to-pink-500 px-4 py-3 flex items-center justify-between rounded-t-lg">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-white" />
+                <h4 className="font-bold text-white text-sm flex items-center gap-1.5">
+                  <span>AI Word Helper</span>
+                  <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full">✨ {word.word}</span>
+                </h4>
+              </div>
+              <button
+                onClick={() => setShowChat(false)}
+                className="text-white hover:bg-white/20 rounded-full p-1.5 transition-colors"
+                title="Close chat"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            
+            {/* Chat Messages */}
+            <div className="p-4 max-h-[450px] min-h-[200px] overflow-y-auto space-y-3 bg-gradient-to-b from-gray-50 to-white">
+              {chatMessages.length === 0 && !isLoadingChat && (
+                <div className="text-center text-gray-500 py-8">
+                  <div className="bg-gradient-to-br from-purple-100 to-pink-100 rounded-full w-16 h-16 mx-auto mb-3 flex items-center justify-center">
+                    <Sparkles className="w-8 h-8 text-purple-600" />
+                  </div>
+                  <p className="text-sm font-medium">Ask AI to learn about this word!</p>
+                  <p className="text-xs mt-1 text-gray-400">Or type your own question below</p>
+                </div>
+              )}
+              
+              {chatMessages.map((message, index) => (
+                <div
+                  key={index}
+                  className={`flex animate-fadeIn ${
+                    message.type === 'user' ? 'justify-end' : 'justify-start'
+                  }`}
+                >
+                  <div
+                    className={`max-w-[90%] rounded-2xl px-4 py-3 shadow-sm ${
+                      message.type === 'user'
+                        ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-br-sm'
+                        : 'bg-gradient-to-br from-white to-gray-50 text-gray-800 border border-gray-200 rounded-bl-sm'
+                    }`}
+                  >
+                    <div className={`text-sm leading-snug ${
+                      message.type === 'ai' ? 'space-y-1' : ''
+                    }`}>
+                      {message.content.split('\n').map((line, i) => {
+                        if (!line.trim()) return <div key={i} className="h-2" />;
+                        
+                        // Check if line is a bullet point (* item)
+                        const isBullet = /^\s*[\*\-\•]\s+/.test(line);
+                        const bulletContent = isBullet ? line.replace(/^\s*[\*\-\•]\s+/, '') : line;
+                        
+                        // Handle bold text **text**
+                        const parts = isBullet ? bulletContent.split(/\*\*(.*?)\*\*/) : line.split(/\*\*(.*?)\*\*/);
+                        
+                        // Check if line starts with emoji or has bold markers
+                        const isHeader = /^[📚💡🎯]/.test(line) || (line.includes('**') && !isBullet);
+                        
+                        // Check if line contains Persian/Arabic characters
+                        const persianChars = (line.match(/[\u0600-\u06FF]/g) || []).length;
+                        const totalChars = line.replace(/\s/g, '').length;
+                        const isPersianDominant = totalChars > 0 && (persianChars / totalChars) > 0.3;
+                        
+                        // Check for special formatting sections
+                        const isSection = /^(English|Persian|Farsi|Verb|Meaning|Example):/i.test(line);
+                        
+                        if (isBullet) {
+                          return (
+                            <div key={i} className="flex gap-2"
+                            style={{
+                              direction: isPersianDominant ? 'rtl' : 'ltr',
+                              textAlign: isPersianDominant ? 'left' : 'left'
+                            }}>
+                              <span className="text-purple-600 font-bold mt-0.5">•</span>
+                              <span className="flex-1">
+                                {parts.map((part, j) => {
+                                  if (j % 2 === 1) {
+                                    return <strong key={j} className="font-bold text-gray-900 text-left">{part}</strong>;
+                                  }
+                                  const isPersian = /[\u0600-\u06FF]/.test(part);
+                                  return (
+                                    <span key={j} className={isPersian ? 'font-medium' : ''}>
+                                      {part}
+                                    </span>
+                                  );
+                                })}
+                              </span>
+                            </div>
+                          );
+                        }
+                        
+                        return (
+                          <p key={i} className={`${
+                            isHeader ? 'font-bold text-gray-900' : isSection ? 'font-semibold text-purple-700' : ''
+                          } ${
+                            message.type === 'ai' && i > 0 ? 'mt-0.5' : ''
+                          }`}
+                          style={{
+                            direction: isPersianDominant ? 'rtl' : 'ltr',
+                            textAlign: isPersianDominant ? 'left' : 'left'
+                          }}>
+                            {parts.map((part, j) => {
+                              if (j % 2 === 1) {
+                                return <strong key={j} className="font-bold text-gray-900">{part}</strong>;
+                              }
+                              
+                              // Handle quoted text "example"
+                              const quoteParts = part.split(/"([^"]+)"/g);
+                              
+                              return quoteParts.map((quotePart, k) => {
+                                // Odd indices are inside quotes
+                                if (k % 2 === 1) {
+                                  const isQuotePersian = /[\u0600-\u06FF]/.test(quotePart);
+                                  return (
+                                    <span key={`${j}-${k}`} className={`italic ${
+                                      isQuotePersian ? 'text-indigo-700 font-medium' : 'text-indigo-600'
+                                    } bg-indigo-50 px-1 rounded`}>
+                                      "{quotePart}"
+                                    </span>
+                                  );
+                                }
+                                
+                                const isPersian = /[\u0600-\u06FF]/.test(quotePart);
+                                return (
+                                  <span key={`${j}-${k}`} className={isPersian ? 'font-medium' : ''}>
+                                    {quotePart}
+                                  </span>
+                                );
+                              });
+                            })}
+                          </p>
+                        );
+                      })}
+                    </div>
+                    <div className={`text-[10px] mt-2 ${
+                      message.type === 'user' ? 'text-blue-100' : 'text-gray-400'
+                    }`}>
+                      {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </div>
+                  </div>
+                </div>
+              ))}
+              
+              {isLoadingChat && (
+                <div className="flex justify-start animate-fadeIn">
+                  <div className="bg-white rounded-2xl rounded-bl-sm px-4 py-3 shadow-sm border border-gray-200">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-yellow-500 animate-spin" />
+                      <span className="text-sm text-gray-600">Thinking...</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              <div ref={chatEndRef} />
+            </div>
+            
+            {/* Custom Question Input */}
+            <div className="p-3 border-t border-gray-200 bg-gray-50 rounded-b-lg">
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={customQuestion}
+                  onChange={(e) => setCustomQuestion(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter' && !isLoadingChat) {
+                      handleCustomQuestion();
+                    }
+                  }}
+                  placeholder="Ask a question about this word..."
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
+                  disabled={isLoadingChat}
+                />
+                <button
+                  onClick={handleCustomQuestion}
+                  disabled={!customQuestion.trim() || isLoadingChat}
+                  className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed text-white rounded-lg text-sm font-semibold transition-all inline-flex items-center gap-2 shadow-sm"
+                  title="Send question to AI"
+                >
+                  <Send className="w-4 h-4" />
+                  <span className="hidden sm:inline">Send</span>
+                </button>
+              </div>
+              <p className="text-[10px] text-gray-500 mt-2 text-center">
+                💡 Tip: Press Enter to send • Ask about usage, examples, or translations
+              </p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

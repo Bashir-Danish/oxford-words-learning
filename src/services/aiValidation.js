@@ -210,9 +210,172 @@ export const getAIQualityFeedback = (validationResult) => {
     };
   }
 };
+/**
+ * Get AI explanation and Persian translation for a word
+ * @param {Object} wordData - Complete word object with all properties
+ * @returns {Promise<Object>} Explanation with Persian translations
+ */
+export const explainWordWithAI = async (wordData) => {
+  try {
+    // Helper function to check if a field has valid data
+    const hasValidData = (value) => {
+      if (!value) return false;
+      if (value === 'N/A' || value === 'ندارد') return false;
+      if (Array.isArray(value)) {
+        return value.length > 0 && value[0] !== 'N/A' && value[0] !== 'ندارد';
+      }
+      return true;
+    };
+    
+    // Prepare text-safe versions for array/string fields
+    const synonymsText = Array.isArray(wordData.synonyms) ? wordData.synonyms.join(', ') : wordData.synonyms;
+    const antonymsText = Array.isArray(wordData.antonyms) ? wordData.antonyms.join(', ') : wordData.antonyms;
+
+    // Build word data string with only available fields
+    let wordDataString = `- Word: ${wordData.word}\n`;
+    
+    if (hasValidData(wordData.definition)) {
+      wordDataString += `- Definition: ${wordData.definition}\n`;
+    }
+    
+    if (hasValidData(wordData.meaning)) {
+      wordDataString += `- Meaning: ${wordData.meaning}\n`;
+    }
+    
+    if (hasValidData(wordData.wordFamily)) {
+      wordDataString += `- Word Family: ${wordData.wordFamily}\n`;
+    }
+    
+    if (hasValidData(wordData.synonyms)) {
+      wordDataString += `- Synonyms: ${synonymsText}\n`;
+    }
+    
+    if (hasValidData(wordData.antonyms)) {
+      wordDataString += `- Antonyms: ${antonymsText}\n`;
+    }
+    
+    if (hasValidData(wordData.example)) {
+      wordDataString += `- Example: ${wordData.example}\n`;
+    }
+    
+    if (hasValidData(wordData.practiceExample) && wordData.practiceExample !== wordData.example) {
+      wordDataString += `- Practice Example: ${wordData.practiceExample}\n`;
+    }
+    
+    const prompt = `You are a helpful English-Persian language tutor. Provide a comprehensive explanation of the word "${wordData.word}" in both English and Persian (Farsi).
+
+IMPORTANT: Start DIRECTLY with the word explanation. DO NOT include any introductory phrases like "Of course!", "Here is", "Sure!", etc.
+
+Word Data (only available fields are shown):
+${wordDataString}
+
+Provide a structured explanation using ONLY the fields that were provided above. Format EXACTLY like this:
+
+📚 **Word: ${wordData.word}**
+کلمه: ${wordData.word}
+
+${hasValidData(wordData.definition) ? `**Definition (تعریف):**
+${wordData.definition}
+[ترجمه فارسی در اینجا]
+
+` : ''}${hasValidData(wordData.meaning) ? `**Meaning (معنی):**
+${wordData.meaning}
+[ترجمه فارسی در اینجا]
+
+` : ''}${hasValidData(wordData.wordFamily) ? `**Word Family (خانواده کلمه):**
+${wordData.wordFamily}
+[ترجمه فارسی در اینجا]
+
+` : ''}${hasValidData(wordData.synonyms) ? `**Synonyms (مترادف):**
+${wordData.synonyms.join(', ')}
+[ترجمه هر کدام به فارسی]
+
+` : ''}${hasValidData(wordData.antonyms) ? `**Antonyms (متضاد):**
+${wordData.antonyms.join(', ')}
+[ترجمه هر کدام به فارسی]
+
+` : ''}${hasValidData(wordData.example) ? `**Example (مثال):**
+"${wordData.example}"
+[ترجمه فارسی در اینجا]
+
+` : ''}${hasValidData(wordData.practiceExample) && wordData.practiceExample !== wordData.example ? `**Practice Example (مثال تمرینی):**
+"${wordData.practiceExample}"
+[ترجمه فارسی در اینجا]
+
+` : ''}💡 **Tip (نکته):**
+[English tip here]
+[نکته فارسی در اینجا]
+
+CRITICAL RULES:
+- ONLY translate and explain the fields that were provided in "Word Data" above
+- DO NOT include sections that say "N/A" or "ندارد"
+- DO NOT make up or infer missing information
+- If Word Family is not provided, skip it entirely - DO NOT try to explain or translate it
+- Keep translations natural and accurate
+- Use proper Persian script (Farsi)
+- Be concise but complete
+- Include both English and Persian for each section that EXISTS
+
+FORMATTING RULES (VERY IMPORTANT):
+- ALWAYS put English text on ONE line
+- ALWAYS put Persian translation on the NEXT separate line (under the English)
+- DO NOT mix English and Persian text on the same line
+- Persian translations should be COMPLETE Persian text only (no English words mixed in)
+- Each Persian line should contain ONLY Persian/Farsi script
+`;
+
+    const response = await fetch(OPENROUTER_API_URL, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
+        "HTTP-Referer": SITE_URL,
+        "X-Title": SITE_NAME,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        messages: [
+          {
+            role: "user",
+            content: prompt
+          }
+        ],
+        temperature: 0.5,
+        max_tokens: 800
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error?.message || `API request failed: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const aiResponse = data.choices?.[0]?.message?.content;
+
+    if (!aiResponse) {
+      throw new Error('No response from AI');
+    }
+
+    return {
+      success: true,
+      explanation: aiResponse.trim()
+    };
+
+  } catch (error) {
+    console.error('AI Explanation Error:', error);
+    
+    return {
+      success: false,
+      error: error.message || 'Failed to get AI explanation',
+      explanation: null
+    };
+  }
+};
 
 export default {
   validateSentenceWithAI,
   checkSentenceSimilarity,
-  getAIQualityFeedback
+  getAIQualityFeedback,
+  explainWordWithAI
 };
