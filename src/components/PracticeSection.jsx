@@ -901,7 +901,7 @@ Provide a clear, helpful answer in both English and Persian (Farsi). Keep your r
             >
               <Sparkles className={`w-4 h-4 ${
                 showChat ? 'animate-pulse' : ''
-              }`} /> Ask AI {showChat && '✓'}
+              }`} /> Ask AI
             </button>
 
             <button

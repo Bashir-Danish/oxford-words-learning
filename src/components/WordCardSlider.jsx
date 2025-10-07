@@ -35,7 +35,6 @@ const WordCardSlider = ({
   const [isFlipped, setIsFlipped] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
 
-  // Ensure front side is shown and details are hidden when the word/index changes
   useEffect(() => {
     setIsFlipped(false);
     setShowDetails(false);
