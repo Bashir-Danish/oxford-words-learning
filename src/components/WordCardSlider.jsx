@@ -94,11 +94,11 @@ const WordCardSlider = ({
 
   const getLevelColor = (level) => {
     const colors = {
-      'A1': 'bg-green-500',
-      'A2': 'bg-blue-500',
-      'B1': 'bg-orange-500',
-      'B2': 'bg-red-500',
-      'C1': 'bg-purple-600',
+      'A1': 'bg-emerald-500',
+      'A2': 'bg-sky-500',
+      'B1': 'bg-amber-500',
+      'B2': 'bg-orange-500',
+      'C1': 'bg-violet-600',
       'C2': 'bg-indigo-600'
     };
     return colors[level] || 'bg-gray-500';
@@ -114,7 +114,7 @@ const WordCardSlider = ({
         </div>
         <button
           onClick={() => setShowDetails(!showDetails)}
-          className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-semibold transition-colors flex items-center gap-1.5 shadow-md"
+          className="px-4 py-2 bg-violet-500 hover:bg-violet-600 text-white rounded-lg text-sm font-semibold transition-all flex items-center gap-1.5 shadow-md"
         >
           {showDetails ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
           <span>Details</span>
@@ -135,11 +135,11 @@ const WordCardSlider = ({
       <div className="perspective-1200 mb-3 relative">
         {/* Details Overlay - Appears on top of front card */}
         {showDetails && !isFlipped && (
-          <div className="absolute inset-0 bg-white rounded-lg shadow-2xl p-4 z-20 overflow-y-auto animate-slideDown border-1 border-purple-500">
+          <div className="absolute inset-0 bg-white rounded-lg shadow-2xl p-4 z-20 overflow-y-auto animate-slideDown border-2 border-violet-500">
             <div className="space-y-3">
-              <div className="flex justify-between items-center mb-3 border-b-2 border-purple-500 pb-2">
+              <div className="flex justify-between items-center mb-3 border-b-2 border-violet-500 pb-2">
                 <h4 className="text-base font-bold text-gray-800 flex items-center gap-2">
-                  <BookOpen className="w-4 h-4 text-purple-600" />
+                  <BookOpen className="w-4 h-4 text-violet-600" />
                   <span>Additional Information</span>
                 </h4>
                 <button
@@ -151,8 +151,8 @@ const WordCardSlider = ({
               </div>
               
               {word.synonyms && word.synonyms.length > 0 && (
-                <div className="bg-green-50 rounded-lg p-3 border-l-4 border-green-500">
-                  <p className="text-xs font-semibold text-green-900 mb-1">Synonyms:</p>
+                <div className="bg-emerald-50 rounded-lg p-3 border-l-4 border-emerald-500">
+                  <p className="text-xs font-semibold text-emerald-900 mb-1">Synonyms:</p>
                   <p className="text-xs text-gray-700">{word.synonyms.join(', ')}</p>
                 </div>
               )}
@@ -165,8 +165,8 @@ const WordCardSlider = ({
               )}
               
               {word.collocations && word.collocations.length > 0 && (
-                <div className="bg-blue-50 rounded-lg p-3 border-l-4 border-blue-500">
-                  <p className="text-xs font-semibold text-blue-900 mb-1">Common Collocations:</p>
+                <div className="bg-sky-50 rounded-lg p-3 border-l-4 border-sky-500">
+                  <p className="text-xs font-semibold text-sky-900 mb-1">Common Collocations:</p>
                   <ul className="list-disc list-inside text-xs text-gray-700">
                     {word.collocations.slice(0, 5).map((col, idx) => (
                       <li key={idx}>{col}</li>
@@ -176,22 +176,22 @@ const WordCardSlider = ({
               )}
 
               {word.relatedWords && word.relatedWords.length > 0 && (
-                <div className="bg-purple-50 rounded-lg p-3 border-l-4 border-purple-500">
-                  <p className="text-xs font-semibold text-purple-900 mb-1">Related Words:</p>
+                <div className="bg-indigo-50 rounded-lg p-3 border-l-4 border-indigo-500">
+                  <p className="text-xs font-semibold text-indigo-900 mb-1">Related Words:</p>
                   <p className="text-xs text-gray-700">{word.relatedWords.join(', ')}</p>
                 </div>
               )}
 
               {word.family && word.family.length > 0 && (
-                <div className="bg-orange-50 rounded-lg p-3 border-l-4 border-orange-500">
-                  <p className="text-xs font-semibold text-orange-900 mb-1">Word Family:</p>
+                <div className="bg-amber-50 rounded-lg p-3 border-l-4 border-amber-500">
+                  <p className="text-xs font-semibold text-amber-900 mb-1">Word Family:</p>
                   <p className="text-xs text-gray-700">{word.family.join(', ')}</p>
                 </div>
               )}
 
               {word.wordFamily && word.wordFamily.length > 0 && (
-                <div className="bg-orange-50 rounded-lg p-3 border-l-4 border-orange-500">
-                  <p className="text-xs font-semibold text-orange-900 mb-1">Word Family:</p>
+                <div className="bg-amber-50 rounded-lg p-3 border-l-4 border-amber-500">
+                  <p className="text-xs font-semibold text-amber-900 mb-1">Word Family:</p>
                   <p className="text-xs text-gray-700">{word.wordFamily.join(', ')}</p>
                 </div>
               )}
@@ -232,7 +232,7 @@ const WordCardSlider = ({
                 )}
               </div>
               {word.learned && (
-                <Check className="text-green-600 w-5 h-5" />
+                <Check className="text-emerald-600 w-5 h-5" />
               )}
             </div>
 

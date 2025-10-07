@@ -690,10 +690,10 @@ Provide a clear, helpful answer in both English and Persian (Farsi). Keep your r
             </div>
             <button
               onClick={() => setShowSuggestions(!showSuggestions)}
-              className={`px-3 py-1 rounded sm:text-xs text-[9px] font-medium transition-colors flex items-center gap-1 ${
+              className={`px-3 py-1 rounded sm:text-xs text-[9px] font-medium transition-all flex items-center gap-1 shadow-sm ${
                 showSuggestions
-                  ? 'bg-green-500 text-white'
-                  : 'bg-gray-300 text-gray-700'
+                  ? 'bg-amber-500 hover:bg-amber-600 text-white'
+                  : 'bg-gray-300 hover:bg-gray-400 text-gray-700'
               }`}
               title="Press SHIFT to toggle hints"
             >
@@ -877,7 +877,7 @@ Provide a clear, helpful answer in both English and Persian (Farsi). Keep your r
             <button
               onClick={handleSubmitSentence}
               disabled={!wordIsUsedInSentence || userSentence.trim().length === 0 || isValidatingAI}
-              className="flex-none px-3 py-1 min-w-[110px] bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded-md font-semibold text-[12px] transition-colors inline-flex items-center justify-center gap-2"
+              className="flex-none px-3 py-1 min-w-[110px] bg-emerald-500 hover:bg-emerald-600 disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded-md font-semibold text-[12px] transition-colors inline-flex items-center justify-center gap-2 shadow-sm"
             >
               {isValidatingAI ? (
                 <>
@@ -909,7 +909,7 @@ Provide a clear, helpful answer in both English and Persian (Farsi). Keep your r
 
             <button
               onClick={() => setShowExample(!showExample)}
-              className="px-2 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md text-[11px] font-semibold transition-colors inline-flex items-center gap-1"
+              className="px-2 py-1 bg-indigo-500 hover:bg-indigo-600 text-white rounded-md text-[11px] font-semibold transition-all inline-flex items-center gap-1 shadow-sm"
               title={showExample ? 'Hide example' : 'Show example'}
             >
               {showExample ? (<><EyeOff className="w-4 h-4" /> Hide</>) : (<><Eye className="w-4 h-4" /> Example</>)}
@@ -917,10 +917,10 @@ Provide a clear, helpful answer in both English and Persian (Farsi). Keep your r
 
             <button
               onClick={handleClearSentence}
-              className="px-2 py-1 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-md text-[11px] font-semibold transition-colors inline-flex items-center gap-1"
+              className="px-2 py-1 bg-gray-500 hover:bg-gray-600 text-white rounded-md text-[11px] font-semibold transition-all inline-flex items-center gap-1 shadow-sm"
               title="Clear sentence"
             >
-              <Trash2 className="w-4 h-4" /> Clear
+              <Trash2 className="w-4 h-4" />
             </button>
           </div>
 
@@ -990,34 +990,35 @@ Provide a clear, helpful answer in both English and Persian (Farsi). Keep your r
         
         {/* Chat Section */}
         {showChat && (
-          <div className="mt-3 bg-white rounded-lg border-2 border-purple-400 shadow-xl animate-slideDown">
+          <div className="mt-3 bg-white rounded-lg border-1 border-purple-400 shadow-xl animate-slideDown">
             {/* Chat Header */}
-            <div className="bg-gradient-to-r from-purple-500 to-pink-500 px-4 py-3 flex items-center justify-between rounded-t-lg">
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-white" />
-                <h4 className="font-bold text-white text-sm flex items-center gap-1.5">
-                  <span>AI Word Helper</span>
-                  <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full">✨ {word.word}</span>
+            <div className="bg-gradient-to-r from-purple-500 to-pink-500 px-3 sm:px-4 py-2 sm:py-3 flex items-center justify-between rounded-t-lg">
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                <h4 className="font-bold text-white text-xs sm:text-sm flex items-center gap-1">
+                  <span className="hidden sm:inline">AI Word Helper</span>
+                  <span className="sm:hidden">AI Helper</span>
+                  <span className="text-[9px] sm:text-[10px] bg-white/20 px-1.5 sm:px-2 py-0.5 rounded-full">✨ {word.word}</span>
                 </h4>
               </div>
               <button
                 onClick={() => setShowChat(false)}
-                className="text-white hover:bg-white/20 rounded-full p-1.5 transition-colors"
+                className="text-white hover:bg-white/20 rounded-full p-1 sm:p-1.5 transition-colors"
                 title="Close chat"
               >
-                <X className="w-4 h-4" />
+                <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </button>
             </div>
             
             {/* Chat Messages */}
-            <div className="p-4 max-h-[450px] min-h-[200px] overflow-y-auto space-y-3 bg-gradient-to-b from-gray-50 to-white">
+            <div className="p-2 sm:p-4 max-h-[350px] sm:max-h-[450px] min-h-[180px] sm:min-h-[200px] overflow-y-auto space-y-2 sm:space-y-3 bg-gradient-to-b from-gray-50 to-white custom-scrollbar">
               {chatMessages.length === 0 && !isLoadingChat && (
-                <div className="text-center text-gray-500 py-8">
-                  <div className="bg-gradient-to-br from-purple-100 to-pink-100 rounded-full w-16 h-16 mx-auto mb-3 flex items-center justify-center">
-                    <Sparkles className="w-8 h-8 text-purple-600" />
+                <div className="text-center text-gray-500 py-6 sm:py-8">
+                  <div className="bg-gradient-to-br from-purple-100 to-pink-100 rounded-full w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-2 sm:mb-3 flex items-center justify-center">
+                    <Sparkles className="w-6 h-6 sm:w-8 sm:h-8 text-purple-600" />
                   </div>
-                  <p className="text-sm font-medium">Ask AI to learn about this word!</p>
-                  <p className="text-xs mt-1 text-gray-400">Or type your own question below</p>
+                  <p className="text-xs sm:text-sm font-medium">Ask AI to learn about this word!</p>
+                  <p className="text-[10px] sm:text-xs mt-1 text-gray-400">Or type your own question below</p>
                 </div>
               )}
               
@@ -1029,13 +1030,13 @@ Provide a clear, helpful answer in both English and Persian (Farsi). Keep your r
                   }`}
                 >
                   <div
-                    className={`max-w-[90%] rounded-2xl px-4 py-3 shadow-sm ${
+                    className={`max-w-[95%] sm:max-w-[90%] rounded-2xl px-3 sm:px-4 py-2 sm:py-3 shadow-sm ${
                       message.type === 'user'
                         ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-br-sm'
                         : 'bg-gradient-to-br from-white to-gray-50 text-gray-800 border border-gray-200 rounded-bl-sm'
                     }`}
                   >
-                    <div className={`text-sm leading-snug ${
+                    <div className={`text-xs sm:text-sm leading-snug ${
                       message.type === 'ai' ? 'space-y-1' : ''
                     }`}>
                       {message.content.split('\n').map((line, i) => {
@@ -1061,12 +1062,12 @@ Provide a clear, helpful answer in both English and Persian (Farsi). Keep your r
                         
                         if (isBullet) {
                           return (
-                            <div key={i} className="flex gap-2"
+                            <div key={i} className="flex gap-1.5 sm:gap-2"
                             style={{
                               direction: isPersianDominant ? 'rtl' : 'ltr',
-                              textAlign: isPersianDominant ? 'left' : 'left'
+                              textAlign: isPersianDominant ? 'right' : 'left'
                             }}>
-                              <span className="text-purple-600 font-bold mt-0.5">•</span>
+                              <span className="text-purple-600 font-bold mt-0.5 text-xs sm:text-sm">•</span>
                               <span className="flex-1">
                                 {parts.map((part, j) => {
                                   if (j % 2 === 1) {
@@ -1127,7 +1128,7 @@ Provide a clear, helpful answer in both English and Persian (Farsi). Keep your r
                         );
                       })}
                     </div>
-                    <div className={`text-[10px] mt-2 ${
+                    <div className={`text-[9px] sm:text-[10px] mt-1.5 sm:mt-2 ${
                       message.type === 'user' ? 'text-blue-100' : 'text-gray-400'
                     }`}>
                       {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -1138,10 +1139,10 @@ Provide a clear, helpful answer in both English and Persian (Farsi). Keep your r
               
               {isLoadingChat && (
                 <div className="flex justify-start animate-fadeIn">
-                  <div className="bg-white rounded-2xl rounded-bl-sm px-4 py-3 shadow-sm border border-gray-200">
-                    <div className="flex items-center gap-2">
-                      <Sparkles className="w-4 h-4 text-yellow-500 animate-spin" />
-                      <span className="text-sm text-gray-600">Thinking...</span>
+                  <div className="bg-white rounded-2xl rounded-bl-sm px-3 sm:px-4 py-2 sm:py-3 shadow-sm border border-gray-200">
+                    <div className="flex items-center gap-1.5 sm:gap-2">
+                      <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-yellow-500 animate-spin" />
+                      <span className="text-xs sm:text-sm text-gray-600">Thinking...</span>
                     </div>
                   </div>
                 </div>
@@ -1151,8 +1152,8 @@ Provide a clear, helpful answer in both English and Persian (Farsi). Keep your r
             </div>
             
             {/* Custom Question Input */}
-            <div className="p-3 border-t border-gray-200 bg-gray-50 rounded-b-lg">
-              <div className="flex gap-2">
+            <div className="p-2 sm:p-3 border-t border-gray-200 bg-gray-50 rounded-b-lg">
+              <div className="flex gap-1.5 sm:gap-2">
                 <input
                   type="text"
                   value={customQuestion}
@@ -1162,22 +1163,22 @@ Provide a clear, helpful answer in both English and Persian (Farsi). Keep your r
                       handleCustomQuestion();
                     }
                   }}
-                  placeholder="Ask a question about this word..."
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
+                  placeholder="Ask a question..."
+                  className="flex-1 px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent"
                   disabled={isLoadingChat}
                 />
                 <button
                   onClick={handleCustomQuestion}
                   disabled={!customQuestion.trim() || isLoadingChat}
-                  className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed text-white rounded-lg text-sm font-semibold transition-all inline-flex items-center gap-2 shadow-sm"
+                  className="px-3 sm:px-4 py-1.5 sm:py-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed text-white rounded-lg text-xs sm:text-sm font-semibold transition-all inline-flex items-center gap-1.5 sm:gap-2 shadow-sm"
                   title="Send question to AI"
                 >
-                  <Send className="w-4 h-4" />
+                  <Send className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   <span className="hidden sm:inline">Send</span>
                 </button>
               </div>
-              <p className="text-[10px] text-gray-500 mt-2 text-center">
-                💡 Tip: Press Enter to send • Ask about usage, examples, or translations
+              <p className="text-[9px] sm:text-[10px] text-gray-500 mt-1.5 sm:mt-2 text-center">
+                💡 <span className="hidden sm:inline">Tip: Press Enter to send •</span> Ask about usage, examples, or translations
               </p>
             </div>
           </div>
