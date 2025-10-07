@@ -24,6 +24,60 @@ class TextToSpeech {
     }
   }
 
+  /**
+   * Expand common abbreviations for text-to-speech
+   * @param {string} text - Text with possible abbreviations
+   * @returns {string} Text with expanded abbreviations
+   */
+  expandAbbreviations(text) {
+    if (!text) return text;
+    
+    const abbreviations = {
+      // Parts of speech
+      '(n)': 'noun',
+      '(v)': 'verb',
+      '(adj)': 'adjective',
+      '(adv)': 'adverb',
+      '(prep)': 'preposition',
+      '(pron)': 'pronoun',
+      '(conj)': 'conjunction',
+      '(interj)': 'interjection',
+      '(det)': 'determiner',
+      '(aux)': 'auxiliary verb',
+      '(modal)': 'modal verb',
+      
+      // Common patterns
+      '(sb)': 'somebody',
+      '(sth)': 'something',
+      '(pl)': 'plural',
+      '(sing)': 'singular',
+      '(C)': 'countable',
+      '(U)': 'uncountable',
+      '(T)': 'transitive',
+      '(I)': 'intransitive',
+      
+      // Common word notations
+      'sb.': 'somebody',
+      'sth.': 'something',
+      'e.g.': 'for example',
+      'i.e.': 'that is',
+      'etc.': 'etcetera',
+      'vs.': 'versus',
+      'approx.': 'approximately',
+    };
+    
+    let expandedText = text;
+    
+    // Replace each abbreviation
+    Object.keys(abbreviations).forEach(abbr => {
+      // Use regex with word boundaries for more precise matching
+      const regex = new RegExp(abbr.replace(/[()]/g, '\\$&'), 'gi');
+      expandedText = expandedText.replace(regex, abbreviations[abbr]);
+    });
+    
+    return expandedText;
+  }
+
   loadVoices() {
     if (!this.synth) return;
     this.voices = this.synth.getVoices();
@@ -60,7 +114,10 @@ class TextToSpeech {
       this.synth.resume();
     }
 
-    const utterance = new SpeechSynthesisUtterance(text);
+    // Expand abbreviations for better pronunciation
+    const expandedText = this.expandAbbreviations(text);
+
+    const utterance = new SpeechSynthesisUtterance(expandedText);
     
     // Set voice
     const voice = this.getEnglishVoice();

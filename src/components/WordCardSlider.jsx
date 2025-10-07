@@ -120,6 +120,132 @@ const WordCardSlider = ({
         </button>
       </div>
 
+      {/* Details Overlay - Back Side with Audio */}
+      {showDetails && isFlipped && (
+        <div className="absolute inset-0 bg-gradient-to-br from-violet-600 to-purple-700 rounded-lg shadow-2xl p-4 z-20 overflow-y-auto animate-slideDown border-2 border-white/30 text-white" style={{ marginTop: '104px' }}>
+          <div className="space-y-3">
+            <div className="flex justify-between items-center mb-3 border-b-2 border-white/50 pb-2">
+              <h4 className="text-base font-bold flex items-center gap-2">
+                <BookOpen className="w-4 h-4" />
+                <span>Additional Information</span>
+              </h4>
+              <button
+                onClick={() => setShowDetails(false)}
+                className="text-white/80 hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            {word.synonyms && word.synonyms.length > 0 && (
+              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/20">
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <p className="text-xs font-semibold flex items-center gap-1">
+                    <span>📝 Synonyms:</span>
+                  </p>
+                  <SpeakerButton 
+                    text={word.synonyms.join(', ')} 
+                    size="sm" 
+                    variant="minimal"
+                  />
+                </div>
+                <p className="text-xs">{word.synonyms.join(', ')}</p>
+              </div>
+            )}
+            
+            {(word.opposites && word.opposites.length > 0) || (word.antonyms && word.antonyms.length > 0) && (
+              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/20">
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <p className="text-xs font-semibold flex items-center gap-1">
+                    <span>🔄 Antonyms/Opposites:</span>
+                  </p>
+                  <SpeakerButton 
+                    text={(word.opposites || word.antonyms || []).join(', ')} 
+                    size="sm" 
+                    variant="minimal"
+                  />
+                </div>
+                <p className="text-xs">{(word.opposites || word.antonyms || []).join(', ')}</p>
+              </div>
+            )}
+            
+            {word.collocations && word.collocations.length > 0 && (
+              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/20">
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <p className="text-xs font-semibold flex items-center gap-1">
+                    <span>🔗 Common Collocations:</span>
+                  </p>
+                  <SpeakerButton 
+                    text={word.collocations.slice(0, 5).join(', ')} 
+                    size="sm" 
+                    variant="minimal"
+                  />
+                </div>
+                <ul className="list-disc list-inside text-xs">
+                  {word.collocations.slice(0, 5).map((col, idx) => (
+                    <li key={idx}>{col}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {word.relatedWords && word.relatedWords.length > 0 && (
+              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/20">
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <p className="text-xs font-semibold flex items-center gap-1">
+                    <span>🔍 Related Words:</span>
+                  </p>
+                  <SpeakerButton 
+                    text={word.relatedWords.join(', ')} 
+                    size="sm" 
+                    variant="minimal"
+                  />
+                </div>
+                <p className="text-xs">{word.relatedWords.join(', ')}</p>
+              </div>
+            )}
+
+            {word.family && word.family.length > 0 && (
+              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/20">
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <p className="text-xs font-semibold flex items-center gap-1">
+                    <span>👨‍👩‍👧‍👦 Word Family:</span>
+                  </p>
+                  <SpeakerButton 
+                    text={word.family.join(', ')} 
+                    size="sm" 
+                    variant="minimal"
+                  />
+                </div>
+                <p className="text-xs">{word.family.join(', ')}</p>
+              </div>
+            )}
+
+            {word.wordFamily && word.wordFamily.length > 0 && (
+              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/20">
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <p className="text-xs font-semibold flex items-center gap-1">
+                    <span>👨‍👩‍👧‍👦 Word Family:</span>
+                  </p>
+                  <SpeakerButton 
+                    text={word.wordFamily.join(', ')} 
+                    size="sm" 
+                    variant="minimal"
+                  />
+                </div>
+                <p className="text-xs">{word.wordFamily.join(', ')}</p>
+              </div>
+            )}
+
+            {!word.synonyms && !word.antonyms && !word.opposites && !word.collocations && !word.relatedWords && !word.wordFamily && !word.family && (
+              <div className="text-center text-sm py-4 text-white/70">
+                No additional details available for this word.
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Progress bar */}
       <div className="mb-3">
         <div className="w-full bg-gray-200 rounded-full h-1.5">
@@ -151,21 +277,42 @@ const WordCardSlider = ({
               
               {word.synonyms && word.synonyms.length > 0 && (
                 <div className="bg-emerald-50 rounded-lg p-3 border-l-4 border-emerald-500">
-                  <p className="text-xs font-semibold text-emerald-900 mb-1">Synonyms:</p>
+                  <div className="flex items-start justify-between gap-2 mb-1">
+                    <p className="text-xs font-semibold text-emerald-900">Synonyms:</p>
+                    <SpeakerButton 
+                      text={word.synonyms.join(', ')} 
+                      size="sm" 
+                      variant="tertiary"
+                    />
+                  </div>
                   <p className="text-xs text-gray-700">{word.synonyms.join(', ')}</p>
                 </div>
               )}
               
               {(word.opposites && word.opposites.length > 0) || (word.antonyms && word.antonyms.length > 0) && (
                 <div className="bg-red-50 rounded-lg p-3 border-l-4 border-red-500">
-                  <p className="text-xs font-semibold text-red-900 mb-1">Antonyms/Opposites:</p>
+                  <div className="flex items-start justify-between gap-2 mb-1">
+                    <p className="text-xs font-semibold text-red-900">Antonyms/Opposites:</p>
+                    <SpeakerButton 
+                      text={(word.opposites || word.antonyms || []).join(', ')} 
+                      size="sm" 
+                      variant="tertiary"
+                    />
+                  </div>
                   <p className="text-xs text-gray-700">{(word.opposites || word.antonyms || []).join(', ')}</p>
                 </div>
               )}
               
               {word.collocations && word.collocations.length > 0 && (
                 <div className="bg-sky-50 rounded-lg p-3 border-l-4 border-sky-500">
-                  <p className="text-xs font-semibold text-sky-900 mb-1">Common Collocations:</p>
+                  <div className="flex items-start justify-between gap-2 mb-1">
+                    <p className="text-xs font-semibold text-sky-900">Common Collocations:</p>
+                    <SpeakerButton 
+                      text={word.collocations.slice(0, 5).join(', ')} 
+                      size="sm" 
+                      variant="tertiary"
+                    />
+                  </div>
                   <ul className="list-disc list-inside text-xs text-gray-700">
                     {word.collocations.slice(0, 5).map((col, idx) => (
                       <li key={idx}>{col}</li>
@@ -176,21 +323,42 @@ const WordCardSlider = ({
 
               {word.relatedWords && word.relatedWords.length > 0 && (
                 <div className="bg-indigo-50 rounded-lg p-3 border-l-4 border-indigo-500">
-                  <p className="text-xs font-semibold text-indigo-900 mb-1">Related Words:</p>
+                  <div className="flex items-start justify-between gap-2 mb-1">
+                    <p className="text-xs font-semibold text-indigo-900">Related Words:</p>
+                    <SpeakerButton 
+                      text={word.relatedWords.join(', ')} 
+                      size="sm" 
+                      variant="tertiary"
+                    />
+                  </div>
                   <p className="text-xs text-gray-700">{word.relatedWords.join(', ')}</p>
                 </div>
               )}
 
               {word.family && word.family.length > 0 && (
                 <div className="bg-amber-50 rounded-lg p-3 border-l-4 border-amber-500">
-                  <p className="text-xs font-semibold text-amber-900 mb-1">Word Family:</p>
+                  <div className="flex items-start justify-between gap-2 mb-1">
+                    <p className="text-xs font-semibold text-amber-900">Word Family:</p>
+                    <SpeakerButton 
+                      text={word.family.join(', ')} 
+                      size="sm" 
+                      variant="tertiary"
+                    />
+                  </div>
                   <p className="text-xs text-gray-700">{word.family.join(', ')}</p>
                 </div>
               )}
 
               {word.wordFamily && word.wordFamily.length > 0 && (
                 <div className="bg-amber-50 rounded-lg p-3 border-l-4 border-amber-500">
-                  <p className="text-xs font-semibold text-amber-900 mb-1">Word Family:</p>
+                  <div className="flex items-start justify-between gap-2 mb-1">
+                    <p className="text-xs font-semibold text-amber-900">Word Family:</p>
+                    <SpeakerButton 
+                      text={word.wordFamily.join(', ')} 
+                      size="sm" 
+                      variant="tertiary"
+                    />
+                  </div>
                   <p className="text-xs text-gray-700">{word.wordFamily.join(', ')}</p>
                 </div>
               )}
@@ -324,7 +492,7 @@ const WordCardSlider = ({
                 <SpeakerButton 
                   text={word.word} 
                   size="md" 
-                  variant="secondary"
+                  variant="transparent"
                 />
               </div>
               <p className="text-xs text-center mb-2 font-medium">{word.persian}</p>
@@ -334,7 +502,16 @@ const WordCardSlider = ({
               <div className="flex-1 space-y-2 overflow-y-auto">
                 {/* Definition */}
                 <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3">
-                  <p className="font-semibold mb-2 text-sm flex items-center gap-1"><BookOpen className="w-4 h-4" /> Definition:</p>
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <p className="font-semibold text-sm flex items-center gap-1">
+                      <BookOpen className="w-4 h-4" /> Definition:
+                    </p>
+                    <SpeakerButton 
+                      text={word.definition} 
+                      size="sm" 
+                      variant="minimal"
+                    />
+                  </div>
                   <p className="text-sm leading-relaxed">{word.definition}</p>
                 </div>
 
