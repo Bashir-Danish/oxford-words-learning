@@ -74,13 +74,13 @@ function AppNew() {
   const getDataSourceColor = () => {
     switch (dataSource) {
       case 'server':
-        return 'text-green-600'; // Green for server
+        return 'text-green-600'; 
       case 'local':
       case 'bundled':
-        return 'text-blue-600'; // Blue for local/bundled
+        return 'text-blue-600'; 
       case 'none':
       default:
-        return 'text-red-600'; // Red for no data
+        return 'text-red-600';
     }
   };
   
@@ -103,7 +103,6 @@ function AppNew() {
     if (currentUser && vocabularyLoading) {
       setShowLoader(true);
     } else if (currentUser && !vocabularyLoading) {
-      // Add a small delay to prevent flash
       const timer = setTimeout(() => {
         setShowLoader(false);
       }, 300);

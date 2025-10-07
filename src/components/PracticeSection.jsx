@@ -751,9 +751,6 @@ Provide a clear, helpful answer in both English and Persian (Farsi). Keep your r
           <p className="text-xs sm:text-sm text-gray-700 mb-1">
             Write a sentence using the word <span className="font-bold text-blue-700">"{word.word}"</span>:
           </p>
-          <p className="text-[10px] text-gray-500 mt-1">
-            ⌨️ Shortcuts: <span className="font-semibold">CTRL</span> - Focus here • <span className="font-semibold">SHIFT</span> - Toggle hints
-          </p>
         </div>
 
         {/* Textarea */}
