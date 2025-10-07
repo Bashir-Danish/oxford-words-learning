@@ -87,6 +87,20 @@ const WordCardSlider = ({
     setIsFlipped(!isFlipped);
   };
 
+  const handleDetailsToggle = () => {
+    // If card is flipped (showing back), flip it to front first
+    if (isFlipped) {
+      setIsFlipped(false);
+      // Wait for flip animation to complete before showing details
+      setTimeout(() => {
+        setShowDetails(true);
+      }, 500); // Match the flip animation duration
+    } else {
+      // If already on front, just toggle details
+      setShowDetails(!showDetails);
+    }
+  };
+
   const handleMarkAsLearned = () => {
     onMarkAsLearned(word.id, !word.learned);
   };
@@ -112,7 +126,7 @@ const WordCardSlider = ({
           <span className="ml-2">{totalDatabaseWords ? Math.round((word?.wordId / totalDatabaseWords) * 100) : Math.round(((currentIndex + 1) / totalWords) * 100)}%</span>
         </div>
         <button
-          onClick={() => setShowDetails(!showDetails)}
+          onClick={handleDetailsToggle}
           className="px-4 py-2 bg-violet-500 hover:bg-violet-600 text-white rounded-lg text-sm font-semibold transition-all flex items-center gap-1.5 shadow-md"
         >
           {showDetails ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
