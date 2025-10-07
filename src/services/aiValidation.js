@@ -230,6 +230,7 @@ export const explainWordWithAI = async (wordData) => {
     // Prepare text-safe versions for array/string fields
     const synonymsText = Array.isArray(wordData.synonyms) ? wordData.synonyms.join(', ') : wordData.synonyms;
     const antonymsText = Array.isArray(wordData.antonyms) ? wordData.antonyms.join(', ') : wordData.antonyms;
+    const wordFamilyText = Array.isArray(wordData.wordFamily) ? wordData.wordFamily.join(', ') : wordData.wordFamily;
 
     // Build word data string with only available fields
     let wordDataString = `- Word: ${wordData.word}\n`;
@@ -243,7 +244,7 @@ export const explainWordWithAI = async (wordData) => {
     }
     
     if (hasValidData(wordData.wordFamily)) {
-      wordDataString += `- Word Family: ${wordData.wordFamily}\n`;
+      wordDataString += `- Word Family: ${wordFamilyText}\n`;
     }
     
     if (hasValidData(wordData.synonyms)) {
@@ -283,7 +284,7 @@ ${wordData.meaning}
 [ترجمه فارسی در اینجا]
 
 ` : ''}${hasValidData(wordData.wordFamily) ? `**Word Family (خانواده کلمه):**
-${wordData.wordFamily}
+${wordFamilyText}
 [ترجمه فارسی در اینجا]
 
 ` : ''}${hasValidData(wordData.synonyms) ? `**Synonyms (مترادف):**

@@ -226,8 +226,11 @@ Provide a clear, helpful answer in both English and Persian (Farsi). Keep your r
       wordData.meaning = word.meaning;
     }
     
+    // Check both wordFamily and family fields (could be either)
     if (isValidValue(word.wordFamily)) {
       wordData.wordFamily = word.wordFamily;
+    } else if (isValidValue(word.family)) {
+      wordData.wordFamily = word.family;
     }
     
     if (isValidValue(word.persianMeaning)) {
@@ -312,7 +315,11 @@ Provide a clear, helpful answer in both English and Persian (Farsi). Keep your r
     }
     
     if (wordData.wordFamily && wordData.wordFamily !== 'N/A') {
-      explanation += `**Word Family (خانواده کلمه):**\n${wordData.wordFamily}\n\n`;
+      // Handle both array and string formats
+      const familyText = Array.isArray(wordData.wordFamily) 
+        ? wordData.wordFamily.join(', ') 
+        : wordData.wordFamily;
+      explanation += `**Word Family (خانواده کلمه):**\n${familyText}\n\n`;
     }
     
     if (wordData.synonyms && wordData.synonyms.length > 0 && wordData.synonyms[0] !== 'N/A') {
