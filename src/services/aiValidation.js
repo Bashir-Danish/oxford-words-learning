@@ -1,15 +1,14 @@
 /**
- * AI Validation Service - Check user practice sentences using OpenRouter AI
- * Uses DeepSeek model to validate if the sentence is grammatically correct
+ * AI Validation Service - Check user practice sentences using Google Gemini AI
+ * Uses Gemini model to validate if the sentence is grammatically correct
  * and uses the target word appropriately
  */
 
 // SECURITY NOTE: In production, move API key to backend server!
 // Never expose API keys in frontend code for production apps
 // You can use environment variables (create a .env file) or hardcode the key here
-const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY || "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";
-const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions";
-const MODEL = "deepseek/deepseek-chat-v3.1:free";
+const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || "AIzaSyBqW8vKx7Z3xN_9hYXjF4pT2mL6kE8cR0Q";
+const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent";
 const SITE_URL = import.meta.env.VITE_SITE_URL || window.location.origin;
 const SITE_NAME = import.meta.env.VITE_SITE_NAME || "Oxford Word Learning App";
 
@@ -41,24 +40,19 @@ STRICT RULES:
    - No placeholders
 6. Max 2-3 clear errors`;
 
-    const response = await fetch(OPENROUTER_API_URL, {
+    const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
-        "HTTP-Referer": SITE_URL, // Your site URL
-        "X-Title": SITE_NAME, // Your app name
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: MODEL,
-        messages: [
-          {
-            role: "user",
-            content: prompt
-          }
-        ],
-        temperature: 0.3, // Lower temperature for more consistent evaluation
-        max_tokens: 150 // Reduced for fastest response
+        contents: [{
+          parts: [{ text: prompt }]
+        }],
+        generationConfig: {
+          temperature: 0.3, // Lower temperature for more consistent evaluation
+          maxOutputTokens: 150 // Reduced for fastest response
+        }
       })
     });
 
@@ -69,8 +63,8 @@ STRICT RULES:
 
     const data = await response.json();
     
-    // Extract the AI's response
-    const aiResponse = data.choices?.[0]?.message?.content;
+    // Extract the AI's response (Gemini format)
+    const aiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text;
     
     if (!aiResponse) {
       throw new Error('No response from AI');
@@ -325,24 +319,19 @@ FORMATTING RULES (VERY IMPORTANT):
 - Each Persian line should contain ONLY Persian/Farsi script
 `;
 
-    const response = await fetch(OPENROUTER_API_URL, {
+    const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
-        "HTTP-Referer": SITE_URL,
-        "X-Title": SITE_NAME,
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: MODEL,
-        messages: [
-          {
-            role: "user",
-            content: prompt
-          }
-        ],
-        temperature: 0.5,
-        max_tokens: 800
+        contents: [{
+          parts: [{ text: prompt }]
+        }],
+        generationConfig: {
+          temperature: 0.5,
+          maxOutputTokens: 800
+        }
       })
     });
 
@@ -352,7 +341,7 @@ FORMATTING RULES (VERY IMPORTANT):
     }
 
     const data = await response.json();
-    const aiResponse = data.choices?.[0]?.message?.content;
+    const aiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text;
 
     if (!aiResponse) {
       throw new Error('No response from AI');

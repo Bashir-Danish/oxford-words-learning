@@ -104,30 +104,34 @@ Student's question: ${question}
 
 Provide a clear, helpful answer in both English and Persian (Farsi). Keep your response concise but complete. Use proper Persian script.`;
       
-      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      // Using Google Gemini (Free with generous limits)
+      const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || "AIzaSyBqW8vKx7Z3xN_9hYXjF4pT2mL6kE8cR0Q";
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${GEMINI_API_KEY}`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${import.meta.env.VITE_OPENROUTER_API_KEY || "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"}`,
-          'HTTP-Referer': window.location.origin,
-          'X-Title': 'Oxford Word Learning App',
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          model: 'deepseek/deepseek-chat-v3.1:free',
-          messages: [
-            { role: 'user', content: prompt }
-          ],
-          temperature: 0.7,
-          max_tokens: 500
+          contents: [{
+            parts: [{ text: prompt }]
+          }],
+          generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 500
+          }
         })
       });
       
       if (!response.ok) {
-        throw new Error('Failed to get AI response');
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.error?.message || `API Error: ${response.status} ${response.statusText}`;
+        console.error('Gemini API Error:', errorMessage, errorData);
+        throw new Error(errorMessage);
       }
       
       const data = await response.json();
-      const aiResponse = data.choices?.[0]?.message?.content;
+      // Gemini API response format
+      const aiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text;
       
       if (aiResponse) {
         const cleanedResponse = cleanAIResponse(aiResponse);
@@ -142,11 +146,20 @@ Provide a clear, helpful answer in both English and Persian (Farsi). Keep your r
       }
     } catch (error) {
       console.error('Failed to get answer:', error);
+      
+      // Create user-friendly error message with technical details
+      let errorMessage = 'Sorry, I couldn\'t process your question. Please try again.\nمتأسفم، نتوانستم سوال شما را پردازش کنم. لطفاً دوباره امتحان کنید.';
+      
+      // Add specific error details if available
+      if (error.message && error.message !== 'Failed to get AI response') {
+        errorMessage += `\n\n🔍 Error Details: ${error.message}`;
+      }
+      
       setChatMessages(prev => [
         ...prev,
         {
           type: 'ai',
-          content: 'Sorry, I couldn\'t process your question. Please try again.\nمتأسفم، نتوانستم سوال شما را پردازش کنم. لطفاً دوباره امتحان کنید.',
+          content: errorMessage,
           timestamp: new Date()
         }
       ]);
