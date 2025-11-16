@@ -1,16 +1,11 @@
 /**
- * AI Validation Service - Check user practice sentences using Google Gemini AI
- * Uses Gemini model to validate if the sentence is grammatically correct
- * and uses the target word appropriately
+ * AI Validation Service - Check user practice sentences using Groq AI
+ * Routes AI requests through backend server for security
  */
 
-// SECURITY NOTE: In production, move API key to backend server!
-// Never expose API keys in frontend code for production apps
-// You can use environment variables (create a .env file) or hardcode the key here
-const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || "AIzaSyBqW8vKx7Z3xN_9hYXjF4pT2mL6kE8cR0Q";
-const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent";
-const SITE_URL = import.meta.env.VITE_SITE_URL || window.location.origin;
-const SITE_NAME = import.meta.env.VITE_SITE_NAME || "Oxford Word Learning App";
+import { getToken } from './api.js';
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 /**
  * Validate a user's sentence using AI
@@ -21,90 +16,30 @@ const SITE_NAME = import.meta.env.VITE_SITE_NAME || "Oxford Word Learning App";
  */
 export const validateSentenceWithAI = async (sentence, targetWord, wordDefinition = '') => {
   try {
-    // Strict prompt requiring exact target word
-    const prompt = `Evaluate if "${targetWord}" is used correctly in: "${sentence}"
-
-JSON:
-{"isCorrect":bool,"score":0-100,"points":0-25,"feedback":"short","correctedSentence":"example","errors":["error1","error2"]}
-
-STRICT RULES:
-1. Word "${targetWord}" MUST be in sentence → if missing = score 0, points 0
-2. Incomplete = 0 points
-3. Meaningless = 0 points
-4. Wrong grammar = max 40 score
-5. correctedSentence MUST:
-   - Use "${targetWord}" correctly
-   - Be COMPLETE sentence
-   - Be MEANINGFUL
-   - Natural English
-   - No placeholders
-6. Max 2-3 clear errors`;
-
-    const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
-      method: "POST",
+    const token = getToken();
+    
+    const response = await fetch(`${API_BASE_URL}/ai/validate-sentence`, {
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json"
+        'Content-Type': 'application/json',
+        'Authorization': token ? `Bearer ${token}` : ''
       },
-      body: JSON.stringify({
-        contents: [{
-          parts: [{ text: prompt }]
-        }],
-        generationConfig: {
-          temperature: 0.3, // Lower temperature for more consistent evaluation
-          maxOutputTokens: 150 // Reduced for fastest response
-        }
-      })
+      body: JSON.stringify({ sentence, targetWord, wordDefinition })
     });
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error?.message || `API request failed: ${response.status}`);
+      throw new Error(errorData.error || errorData.message || `API request failed: ${response.status}`);
     }
 
-    const data = await response.json();
+    const result = await response.json();
     
-    // Extract the AI's response (Gemini format)
-    const aiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text;
-    
-    if (!aiResponse) {
-      throw new Error('No response from AI');
+    // Backend returns { success, data, error }
+    if (!result.success) {
+      throw new Error(result.error || 'Validation failed');
     }
 
-    // Parse the JSON response from AI
-    let result;
-    try {
-      // Try to extract JSON from the response (in case AI added markdown)
-      const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
-      const jsonString = jsonMatch ? jsonMatch[0] : aiResponse;
-      result = JSON.parse(jsonString);
-    } catch (parseError) {
-      console.error('Failed to parse AI response:', aiResponse);
-      throw new Error('Invalid AI response format');
-    }
-
-    // Validate the result has required fields
-    if (typeof result.isCorrect !== 'boolean' || 
-        typeof result.score !== 'number' || 
-        typeof result.points !== 'number') {
-      throw new Error('AI response missing required fields');
-    }
-
-    // Ensure score and points are within valid ranges
-    result.score = Math.max(0, Math.min(100, result.score));
-    result.points = Math.max(0, Math.min(25, result.points));
-
-    return {
-      success: true,
-      data: {
-        isCorrect: result.isCorrect,
-        score: result.score,
-        points: result.points,
-        feedback: result.feedback || 'Sentence evaluated.',
-        correctedSentence: result.correctedSentence || null,
-        errors: Array.isArray(result.errors) ? result.errors : [],
-        aiValidated: true
-      }
-    };
+    return result;
 
   } catch (error) {
     console.error('AI Validation Error:', error);
@@ -211,146 +146,30 @@ export const getAIQualityFeedback = (validationResult) => {
  */
 export const explainWordWithAI = async (wordData) => {
   try {
-    // Helper function to check if a field has valid data
-    const hasValidData = (value) => {
-      if (!value) return false;
-      if (value === 'N/A' || value === 'ندارد') return false;
-      if (Array.isArray(value)) {
-        return value.length > 0 && value[0] !== 'N/A' && value[0] !== 'ندارد';
-      }
-      return true;
-    };
+    const token = getToken();
     
-    // Prepare text-safe versions for array/string fields
-    const synonymsText = Array.isArray(wordData.synonyms) ? wordData.synonyms.join(', ') : wordData.synonyms;
-    const antonymsText = Array.isArray(wordData.antonyms) ? wordData.antonyms.join(', ') : wordData.antonyms;
-    const wordFamilyText = Array.isArray(wordData.wordFamily) ? wordData.wordFamily.join(', ') : wordData.wordFamily;
-
-    // Build word data string with only available fields
-    let wordDataString = `- Word: ${wordData.word}\n`;
-    
-    if (hasValidData(wordData.definition)) {
-      wordDataString += `- Definition: ${wordData.definition}\n`;
-    }
-    
-    if (hasValidData(wordData.meaning)) {
-      wordDataString += `- Meaning: ${wordData.meaning}\n`;
-    }
-    
-    if (hasValidData(wordData.wordFamily)) {
-      wordDataString += `- Word Family: ${wordFamilyText}\n`;
-    }
-    
-    if (hasValidData(wordData.synonyms)) {
-      wordDataString += `- Synonyms: ${synonymsText}\n`;
-    }
-    
-    if (hasValidData(wordData.antonyms)) {
-      wordDataString += `- Antonyms: ${antonymsText}\n`;
-    }
-    
-    if (hasValidData(wordData.example)) {
-      wordDataString += `- Example: ${wordData.example}\n`;
-    }
-    
-    if (hasValidData(wordData.practiceExample) && wordData.practiceExample !== wordData.example) {
-      wordDataString += `- Practice Example: ${wordData.practiceExample}\n`;
-    }
-    
-    const prompt = `You are a helpful English-Persian language tutor. Provide a comprehensive explanation of the word "${wordData.word}" in both English and Persian (Farsi).
-
-IMPORTANT: Start DIRECTLY with the word explanation. DO NOT include any introductory phrases like "Of course!", "Here is", "Sure!", etc.
-
-Word Data (only available fields are shown):
-${wordDataString}
-
-Provide a structured explanation using ONLY the fields that were provided above. Format EXACTLY like this:
-
-📚 **Word: ${wordData.word}**
-کلمه: ${wordData.word}
-
-${hasValidData(wordData.definition) ? `**Definition (تعریف):**
-${wordData.definition}
-[ترجمه فارسی در اینجا]
-
-` : ''}${hasValidData(wordData.meaning) ? `**Meaning (معنی):**
-${wordData.meaning}
-[ترجمه فارسی در اینجا]
-
-` : ''}${hasValidData(wordData.wordFamily) ? `**Word Family (خانواده کلمه):**
-${wordFamilyText}
-[ترجمه فارسی در اینجا]
-
-` : ''}${hasValidData(wordData.synonyms) ? `**Synonyms (مترادف):**
-${wordData.synonyms.join(', ')}
-[ترجمه هر کدام به فارسی]
-
-` : ''}${hasValidData(wordData.antonyms) ? `**Antonyms (متضاد):**
-${wordData.antonyms.join(', ')}
-[ترجمه هر کدام به فارسی]
-
-` : ''}${hasValidData(wordData.example) ? `**Example (مثال):**
-"${wordData.example}"
-[ترجمه فارسی در اینجا]
-
-` : ''}${hasValidData(wordData.practiceExample) && wordData.practiceExample !== wordData.example ? `**Practice Example (مثال تمرینی):**
-"${wordData.practiceExample}"
-[ترجمه فارسی در اینجا]
-
-` : ''}💡 **Tip (نکته):**
-[English tip here]
-[نکته فارسی در اینجا]
-
-CRITICAL RULES:
-- ONLY translate and explain the fields that were provided in "Word Data" above
-- DO NOT include sections that say "N/A" or "ندارد"
-- DO NOT make up or infer missing information
-- If Word Family is not provided, skip it entirely - DO NOT try to explain or translate it
-- Keep translations natural and accurate
-- Use proper Persian script (Farsi)
-- Be concise but complete
-- Include both English and Persian for each section that EXISTS
-
-FORMATTING RULES (VERY IMPORTANT):
-- ALWAYS put English text on ONE line
-- ALWAYS put Persian translation on the NEXT separate line (under the English)
-- DO NOT mix English and Persian text on the same line
-- Persian translations should be COMPLETE Persian text only (no English words mixed in)
-- Each Persian line should contain ONLY Persian/Farsi script
-`;
-
-    const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
-      method: "POST",
+    const response = await fetch(`${API_BASE_URL}/ai/explain-word`, {
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json"
+        'Content-Type': 'application/json',
+        'Authorization': token ? `Bearer ${token}` : ''
       },
-      body: JSON.stringify({
-        contents: [{
-          parts: [{ text: prompt }]
-        }],
-        generationConfig: {
-          temperature: 0.5,
-          maxOutputTokens: 800
-        }
-      })
+      body: JSON.stringify({ wordData })
     });
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error?.message || `API request failed: ${response.status}`);
+      throw new Error(errorData.error || errorData.message || `API request failed: ${response.status}`);
     }
 
-    const data = await response.json();
-    const aiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text;
-
-    if (!aiResponse) {
-      throw new Error('No response from AI');
+    const result = await response.json();
+    
+    // Backend returns { success, explanation, error }
+    if (!result.success) {
+      throw new Error(result.error || 'Explanation failed');
     }
 
-    return {
-      success: true,
-      explanation: aiResponse.trim()
-    };
+    return result;
 
   } catch (error) {
     console.error('AI Explanation Error:', error);

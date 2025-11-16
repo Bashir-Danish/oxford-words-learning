@@ -97,44 +97,37 @@ const PracticeSection = ({ word, onAwardPoints }) => {
     setIsLoadingChat(true);
     
     try {
-      // Create prompt with word context
-      const prompt = `You are a helpful English-Persian language tutor. The student is learning the word "${word.word}" which means "${word.definition || word.meaning}".
-
-Student's question: ${question}
-
-Provide a clear, helpful answer in both English and Persian (Farsi). Keep your response concise but complete. Use proper Persian script.`;
+      // Call backend API for AI answer
+      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+      const token = localStorage.getItem('auth_token');
       
-      // Using Google Gemini (Free with generous limits)
-      const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || "AIzaSyBqW8vKx7Z3xN_9hYXjF4pT2mL6kE8cR0Q";
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${GEMINI_API_KEY}`, {
+      const response = await fetch(`${API_BASE_URL}/ai/answer-question`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': token ? `Bearer ${token}` : ''
         },
         body: JSON.stringify({
-          contents: [{
-            parts: [{ text: prompt }]
-          }],
-          generationConfig: {
-            temperature: 0.7,
-            maxOutputTokens: 500
+          question,
+          wordContext: {
+            word: word.word,
+            definition: word.definition,
+            meaning: word.meaning
           }
         })
       });
       
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        const errorMessage = errorData.error?.message || `API Error: ${response.status} ${response.statusText}`;
-        console.error('Gemini API Error:', errorMessage, errorData);
+        const errorMessage = errorData.error || errorData.message || `API Error: ${response.status} ${response.statusText}`;
+        console.error('Backend API Error:', errorMessage, errorData);
         throw new Error(errorMessage);
       }
       
       const data = await response.json();
-      // Gemini API response format
-      const aiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text;
       
-      if (aiResponse) {
-        const cleanedResponse = cleanAIResponse(aiResponse);
+      if (data.success && data.answer) {
+        const cleanedResponse = cleanAIResponse(data.answer);
         setChatMessages(prev => [
           ...prev,
           {
@@ -143,6 +136,8 @@ Provide a clear, helpful answer in both English and Persian (Farsi). Keep your r
             timestamp: new Date()
           }
         ]);
+      } else {
+        throw new Error(data.error || 'No answer received');
       }
     } catch (error) {
       console.error('Failed to get answer:', error);
